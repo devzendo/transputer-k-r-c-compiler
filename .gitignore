@@ -1,0 +1,13 @@
+.DS_Store
+*.iml
+.idea
+.idea/
+**/*.*~
+**/*.swp
+cmake-build-debug
+cmake-build-release
+Testing/
+Reference/
+target
+tvs1
+

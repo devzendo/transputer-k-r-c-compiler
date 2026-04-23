@@ -1,6 +1,6 @@
 /*
 ** Small C compiler for transputer.
-** Now with expresion trees and optimized code generator.
+** Now with expression trees and optimized code generator.
 **
 ** by Oscar Toledo Gutierrez.
 **
@@ -9,19 +9,19 @@
 ** 12-jun-1995
 */
  
-#define BANNER  "*** Compilador de C para G-10 ***"
-#define AUTHOR  "   por Oscar Toledo Gutierrez."
+#define BANNER  "*** C Compiler for G-10 ***"
+#define AUTHOR  "   by Oscar Toledo Gutierrez."
 #define VERSION "          Version 1.00"
 
 #define NO      0
-#define SI      1
+#define YES     1
 
-/* Definiciones para ejecucion solitaria */
+/* Definitions for standalone execution */
 
 #define NULL 0
 #define eol 10
 
-/* Define parametros de la tabla de nombres */
+/* Define symbol table parameters */
 
 #define symsiz  24
 #define symtbsz 8400
@@ -31,7 +31,7 @@
 #define startloc endglb+symsiz
 #define endloc  symtab+symtbsz-symsiz
 
-/* Define formato de los nombres */
+/* Define symbol entry format */
 
 #define name    0
 #define ident   17
@@ -39,58 +39,58 @@
 #define storage 19
 #define offset  20
 
-/* Tama¤o m ximo de los nombres */
+/* Maximum name size */
 
 #define namesize 17
 #define namemax  16
 
-/* Valores posibles para "ident" */
+/* Possible values for "ident" */
 
 #define variable 1
 #define array    2
 #define pointer  3
 #define function 4
 
-/* Valores posibles para "type" */
+/* Possible values for "type" */
 
 #define cchar   1
 #define cint    2
 
-/* Valores posibles para "storage" */
+/* Possible values for "storage" */
 
 #define statik  1
 #define stkloc  2
 
-/* Define la cola de "while" */
+/* Define the while-loop queue */
 
 #define wqtabsz 100
 #define wqsiz   4
 #define wqmax   wq+wqtabsz-wqsiz
 
-/* Define los desplazamientos en la cola de while's */
+/* Define offsets within the while-loop queue */
 
 #define wqsym   0
 #define wqsp    1
 #define wqloop  2
 #define wqlab   3
 
-/* Define el almacenamiento de cadenas */
+/* Define string literal storage */
 
 #define litabsz 1024
 #define litmax  litabsz-1
 
-/* Define la linea de entrada */
+/* Define the input line buffer */
 
 #define linesize 512
 #define linemax linesize-1
 #define mpmax   linemax
 
-/* Define el almacenamiento de macros */
+/* Define macro storage */
 
 #define macqsize 4096
 #define macmax  macqsize-1
 
-/* Define los tipos de sentencias */
+/* Define statement types */
 
 #define stif     1
 #define stwhile  2
@@ -100,96 +100,96 @@
 #define stasm    6
 #define stexp    7
 
-/* Define como cortar un nombre muy largo para el ensamblador */
+/* Define how to truncate a long name for the assembler */
 
 #define asmpref 7
 #define asmsuff 7
 
-/* Reserva espacio para las variables */
+/* Reserve space for variables */
 
-char symtab[symtbsz];   /* Tabla de nombres */
-char *glbptr, *locptr;  /* Apuntadores a las sigs. entradas libres */
+char symtab[symtbsz];   /* Symbol table */
+char *glbptr, *locptr;  /* Pointers to the next free entries */
 
-int wq[wqtabsz];        /* Cola de bucles */
-int *wqptr;             /* Apuntador a la sig. entrada */
+int wq[wqtabsz];        /* Loop queue */
+int *wqptr;             /* Pointer to the next entry */
 
-char litq[litabsz];     /* Almacenamiento de cadenas */
-int litptr;             /* Apuntador a la sig. entrada */
+char litq[litabsz];     /* String literal storage */
+int litptr;             /* Pointer to the next entry */
 
-char macq[macqsize];    /* Buffer de macros */
-int macptr;             /* Indice en el buffer */
+char macq[macqsize];    /* Macro buffer */
+int macptr;             /* Index into the buffer */
 
-char line[linesize];    /* Buffer de analisis */
-char mline[linesize];   /* Buffer sin preprocesar */
-int lptr, mptr;         /* Apuntadores respectivos */
+char line[linesize];    /* Parse buffer */
+char mline[linesize];   /* Pre-preprocessed buffer */
+int lptr, mptr;         /* Respective pointers */
 
-/* Almacenamiento miscelaneo */
+/* Miscellaneous storage */
 
-int nxtlab,             /* Siguiente etiqueta disponible */
-    litlab,             /* Etiqueta para el buffer de cadenas */
-    Zsp,                /* Apuntador de pila del compilador */
-    argstk,             /* Pila de argumentos */
-    ncmp,               /* No. de bloques abiertos */
-    errcnt,             /* No. de errores detectados */
-    errstop,            /* Indica si se detiene en caso de error */
-    eof,                /* Indica el final del archivo de entrada */
-    input,              /* Archivo de entrada */
-    output,             /* Archivo de salida */
-    input2,             /* Archivo #include */
-    ctext,              /* Indica si incluye el prog. en la salida */
-    cmode,              /* Indica si esta compilando C */
-    lastst,             /* Ultima sentencia ejecutada */
-    saveout,            /* Indica desvio a la consola */
-    fnstart,            /* Linea de comienzo de la funcion actual */
-    lineno,             /* Linea en el archivo actual */
-    infunc,             /* Indica si esta dentro de una funcion */
-    savestart,          /* Copia de "fnstart" */
-    saveline,           /* Copia de "lineno" */
-    saveinfn;           /* Copia de "infunc" */
+int nxtlab,             /* Next available label */
+    litlab,             /* Label for the string buffer */
+    Zsp,                /* Compiler stack pointer */
+    argstk,             /* Argument stack */
+    ncmp,               /* Number of open blocks */
+    errcnt,             /* Number of errors detected */
+    errstop,            /* Whether to stop on error */
+    eof,                /* Indicates end of input file */
+    input,              /* Input file */
+    output,             /* Output file */
+    input2,             /* #include file */
+    ctext,              /* Whether to include source in output */
+    cmode,              /* Whether currently compiling C */
+    lastst,             /* Last statement executed */
+    saveout,            /* Indicates redirect to console */
+    fnstart,            /* Starting line of the current function */
+    lineno,             /* Line number in current file */
+    infunc,             /* Whether inside a function */
+    savestart,          /* Copy of "fnstart" */
+    saveline,           /* Copy of "lineno" */
+    saveinfn;           /* Copy of "infunc" */
 
-char *currfn,           /* Apuntador a la definicion de la funci¢n actual */
-     *savecurr;         /* Copia de "currfn" para #include */
-char quote[2];          /* Cadena literal para '"' */
-char *cptr;             /* Apuntador de trabajo */
-int *iptr;              /* Apuntador de trabajo */
-int posglobal;          /* Posicion para variables estaticas */
-int usaexpr;            /* Indica si se usa el resultado de la expr. */
+char *currfn,           /* Pointer to the definition of the current function */
+     *savecurr;         /* Copy of "currfn" for #include */
+char quote[2];          /* Literal string for '"' */
+char *cptr;             /* Working pointer */
+int *iptr;              /* Working pointer */
+int global_pos;          /* Position for static variables */
+int use_expr;            /* Whether the expression result is used */
 
 /*
-** El compilador comienza su ejecucion aqui.
+** Compiler execution starts here.
 */
 main()
 {
-  hello();              /* Presentacion */
-  see();                /* Determina las opciones */
-  openin();             /* Primer archivo a procesar */
-  while (input != 0) {  /* Procesa todos los archivos que se pidan */
-    glbptr = startglb;  /* Limpia la tabla global */
-    locptr = startloc;  /* Limpia la tabla local */
-    wqptr = wq;         /* Limpia la cola de bucles */
-    macptr =            /* Limpia la tabla de macros */
-    Zsp =               /* Apuntador de pila */
-    errcnt =            /* No hay errores */
-    eof =               /* No se ha alcanzado el fin del archivo */
-    input2 =            /* No hay #include */
-    saveout =           /* No se ha desviado la salida */
-    ncmp =              /* No hay bloques abiertos */
+  banner();              /* Banner */
+  options();                /* Process options */
+  openin();             /* First file to process */
+  while (input != 0) {  /* Process all requested files */
+    glbptr = startglb;  /* Clear the global table */
+    locptr = startloc;  /* Clear the local table */
+    wqptr = wq;         /* Clear the loop queue */
+    macptr =            /* Clear the macro table */
+    Zsp =               /* Stack pointer */
+    errcnt =            /* No errors */
+    eof =               /* EOF not yet reached */
+    input2 =            /* No #include open */
+    saveout =           /* Output not yet redirected */
+    ncmp =              /* No open blocks */
     lastst =
-    fnstart =           /* La funcion actual empez¢ en la linea 0 */
-    lineno =            /* No se han leido lineas del archivo */
-    infunc =            /* No esta dentro de una funci¢n */
-    nxtlab =            /* Inicia n£meros de etiquetas */
+    fnstart =           /* Current function started at line 0 */
+    lineno =            /* No lines have been read from the file */
+    infunc =            /* Not inside a function */
+    nxtlab =            /* Initialize label numbers */
     quote[1] =
     0;
-    quote[0] = '"';     /* Crea una cadena con una comilla */
-    posglobal = 2;
-    currfn = NULL;      /* Ninguna funci¢n a£n */
-    cmode = 1;          /* Activa el preprocesamiento */
+    quote[0] = '"';     /* Create a string with a quote */
+    global_pos = 2;
+    currfn = NULL;      /* No function yet */
+    cmode = 1;          /* Enable preprocessing */
     openout();
     header();
     parse();
     if (ncmp)
-      error("Falta llave de cierre");
+      error("Missing closing brace");
     trailer();
     closeout();
     errorsummary();
@@ -198,7 +198,7 @@ main()
 }
 
 /*
-** Cancela la compilaci¢n.
+** Abort the compilation.
 */
 abort()
 {
@@ -208,22 +208,22 @@ abort()
     fclose(input);
   closeout();
   toconsole();
-  pl("Compilaci¢n cancelada.");
+  pl("Compilation aborted.");
   nl();
   exit();
 }
 
 
 /*
-** Procesa todo el texto de entrada.
+** Process all the input text.
 **
-** En este nivel, solo declaraciones estaticas,
-** #define, #include, y definiciones de funcion
-** son legales.
+** At this level, only static declarations,
+** #define, #include, and function definitions
+** are legal.
 */
 parse()
 {
-  while (eof == 0) {    /* Trabaja hasta que no haya mas entrada */
+  while (eof == 0) {    /* Work until no more input */
     if (amatch("char", 4)) {
       declglb(cchar);
       ns();
@@ -238,53 +238,53 @@ parse()
       addmac();
     else
       newfunc();
-    blanks();           /* Rastrea fin de archivo */
+    blanks();           /* Track end of file */
   }
 }
 
 /*
-** Vacia el almacenamiento de cadenas
+** Flush the string literal storage
 */
 dumplits()
 {
   int j, k;
 
   if (litptr == 0)
-    return;             /* No hay nada, volver... */
-  printlabel(litlab);   /* Imprime la etiqueta */
+    return;             /* Nothing to dump, return... */
+  printlabel(litlab);   /* Print the label */
   col();
   nl();
-  k = 0;                /* Inicia un indice... */
-  while (k < litptr) {  /* para vaciar el almacenamiento */
+  k = 0;                /* Start an index... */
+  while (k < litptr) {  /* to flush the storage */
     defbyte();          /* Define byte */
-    j = 5;              /* Bytes por linea */
+    j = 5;              /* Bytes per line */
     while (j--) {
       outdec(litq[k++] & 255);
       if ((j == 0) | (k >= litptr)) {
-        nl();           /* Otra linea */
+        nl();           /* Another line */
         break;
       }
-      outbyte(',');     /* Separa los bytes */
+      outbyte(',');     /* Separate the bytes */
     }
   }
 }
 
 /*
-** Reporta los errores
+** Report errors
 */
 errorsummary()
 {
   nl();
-  outstr("Hubo ");
-  outdec(errcnt);       /* No. total de errores */
-  outstr(" errores en la compilaci¢n.");
+  outstr("There were ");
+  outdec(errcnt);       /* Total number of errors */
+  outstr(" errors in the compilation.");
   nl();
 }
 
 /*
-** Presentacion.
+** Banner.
 */
-hello()
+banner()
 {
   nl();
   nl();
@@ -298,81 +298,81 @@ hello()
   nl();
 }
 
-see()
+options()
 {
-  /* Checa si el usuario quiere ver todos los errores */
-  pl("Desea una pausa despues de un error (S/N) ? ");
+  /* Check whether the user wants to see all errors */
+  pl("Pause after each error? (Y/N) ");
   gets(line);
   errstop = 0;
-  if ((ch() == 'S') | (ch() == 's'))
+  if ((ch() == 'Y') | (ch() == 'y'))
     errstop = 1;
 
-  pl("Desea que aparezca el listado C (S/N) ? ");
+  pl("Show C source listing? (Y/N) ");
   gets(line);
   ctext = 0;
-  if ((ch() == 'S') | (ch() == 's'))
+  if ((ch() == 'Y') | (ch() == 'y'))
     ctext = 1;
 }
 
 /*
-** Obtiene el nombre del archivo de salida.
+** Get the output file name.
 */
 openout()
 {
-  output = 0;           /* Por defecto la salida a la consola */
+  output = 0;           /* Default output to console */
   while (output == 0) {
     kill();
-    pl("Archivo de salida ? ");
-    gets(line);         /* Obtiene el nombre */
+    pl("Output file? ");
+    gets(line);         /* Get the name */
     if (ch() == 0)
-      break;            /* Ninguno... */
-    if ((output = fopen(line, "w")) == NULL) {  /* Intenta crear */
-      output = 0;       /* No pudo crearse */
-      error("No se pudo crear el archivo");
+      break;            /* None... */
+    if ((output = fopen(line, "w")) == NULL) {  /* Try to create */
+      output = 0;       /* Could not create */
+      error("Could not create file");
     }
   }
-  kill();               /* Limpia la linea */
+  kill();               /* Clear the line */
 }
 
 /*
-** Obtiene el archivo de entrada
+** Get the input file
 */
 openin()
 {
-  input = 0;            /* Ninguno aun */
+  input = 0;            /* None yet */
   while (input == 0) {
-    kill();             /* Limpia la linea de entrada */
-    pl("Archivo de entrada ? ");
-    gets(line);         /* Obtiene un nombre */
+    kill();             /* Clear the input line */
+    pl("Input file? ");
+    gets(line);         /* Get a name */
     if (ch() == 0)
       break;
     if ((input = fopen(line, "r")) != NULL)
       newfile();
     else {
-      input = 0;        /* No se pudo leer */
-      pl("No se pudo leer el archivo");
+      input = 0;        /* Could not read */
+      pl("Could not read file");
     }
   }
-  kill();               /* Limpia la linea */
+  kill();               /* Clear the line */
 }
 
 /*
-** Inicia el contador de lineas.
+** Initialize the line counter.
 */
 newfile()
 {
-  lineno = 0;           /* Ninguna linea leida */
-  fnstart = 0;          /* Ninguna funcion aun */
+  lineno = 0;           /* No lines read yet */
+  fnstart = 0;          /* No function yet */
   currfn = NULL;
   infunc = 0;
 }
 
 /*
-** Abre un archivo #include
+** Open a #include file
 */
 doinclude()
 {
-  blanks();             /* Salta los espacios */
+  blanks();             /* Skip whitespace */
 
   toconsole();
   outstr("#include ");
@@ -381,10 +381,10 @@ doinclude()
   tofile();
 
   if (input2)
-    error("No se pueden anidar archivos");
+    error("Cannot nest include files");
   else if ((input2 = fopen(line + lptr, "r")) == NULL) {
     input2 = 0;
-    error("No se pudo leer el archivo");
+    error("Could not read file");
   } else {
     saveline = lineno;
     savecurr = currfn;
@@ -392,17 +392,17 @@ doinclude()
     savestart = fnstart;
     newfile();
   }
-  kill();               /* La siguiente entrada sera del */
-                        /* nuevo archivo. */
+  kill();               /* Next input will come from */
+                        /* the new file. */
 }
 
 /*
-** Cierra un archivo #include
+** Close a #include file
 */
 endinclude()
 {
   toconsole();
-  outstr("#fin include");
+  outstr("#end include");
   nl();
   tofile();
 
@@ -414,23 +414,23 @@ endinclude()
 }
 
 /*
-** Cierra el archivo de salida.
+** Close the output file.
 */
 closeout()
 {
-  tofile();             /* Si esta desviado, volver al archivo */
+  tofile();             /* If redirected, return to file */
   if (output)
-    fclose(output);     /* Si esta abierto, cerrarlo */
-  output = 0;           /* Marcar como cerrado */
+    fclose(output);     /* If open, close it */
+  output = 0;           /* Mark as closed */
 }
 
 /*
-** Declara una variable est tica.
+** Declare a static variable.
 **
-** Crea una entrada en la tabla, para que las
-** referencias subsiguientes la llamen por nombre.
+** Creates a table entry so that subsequent
+** references can call it by name.
 */
-declglb(typ)            /* typ es cchar o cint */
+declglb(typ)            /* typ is cchar or cint */
   int typ;
 {
   int k, j;
@@ -439,44 +439,44 @@ declglb(typ)            /* typ es cchar o cint */
   while (1) {
     while (1) {
       if (endst())
-        return;         /* Procesa la linea */
-      k = 1;            /* Asume 1 elemento */
-      if (match("*"))   /* ¨ Apuntador ? */
-        j = pointer;    /* Si */
+        return;         /* Process the line */
+      k = 1;            /* Assume 1 element */
+      if (match("*"))   /* Pointer? */
+        j = pointer;    /* Yes */
       else
         j = variable;   /* No */
-      if (symname(sname) == 0)  /* ¨ Nombre correcto ? */
+      if (symname(sname) == 0)  /* Valid name? */
         illname();              /* No... */
-      if (findglb(sname))       /* ¨ Ya estaba en la tabla ? */
+      if (findglb(sname))       /* Already in the table? */
         multidef(sname);
-      if (match("[")) {         /* ¨ Matriz ? */
-        k = needsub();          /* Obtiene el tama¤o */
+      if (match("[")) {         /* Array? */
+        k = needsub();          /* Get the size */
         if (k)
-          j = array;            /* !0= Matriz */
+          j = array;            /* !0= Array */
         else
-          j = pointer;          /* 0= Apuntador */
+          j = pointer;          /* 0= Pointer */
       }
-      addglb(sname, j, typ, posglobal); /* Agrega el nombre */
+      addglb(sname, j, typ, global_pos); /* Add the name */
       if ((cptr[type] == cint) |
           (cptr[ident] == pointer))
         k = k * 4;
-      posglobal = posglobal + ((k + 3) / 4);
+      global_pos = global_pos + ((k + 3) / 4);
       break;
     }
     if (match(",") == 0)
-      return;                   /* ¨ M s ? */
+      return;                   /* More? */
   }
 }
 
 /*
-** Procesa declaraciones de variables locales.
+** Process local variable declarations.
 */
 declloc()
 {
-  int k, j, pila, typ;
+  int k, j, stack, typ;
   char sname[namesize];
 
-  pila = Zsp;
+  stack = Zsp;
   while (1) {
     if (amatch("int", 3))
       typ = cint;
@@ -510,47 +510,47 @@ declloc()
 	k = 1;
       else
 	k = 4;
-      /* Modifica la pila */
+      /* Adjust the stack */
       k = (k + 3) / 4;
-      pila = pila - k;
-      addloc(sname, j, typ, pila);
+      stack = stack - k;
+      addloc(sname, j, typ, stack);
       if (match(",") == 0)
         break;
     }
     ns();
   }
-  Zsp = modstk(pila);
+  Zsp = modstk(stack);
 }
 
 /*
-** Obtiene el tama¤o de una matriz.
+** Get the size of an array.
 **
-** Invocada cuando una declaraci¢n es seguida
-** por "[".
+** Called when a declaration is followed
+** by "[".
 */
 needsub()
 {
   int num[1];
 
   if (match("]"))
-    return 0;                   /* Tama¤o nulo */
-  if (number(num) == 0) {       /* Busca el n£mero */
-    error("Debe ser un n£mero");/* No es un n£mero */
-    num[0] = 1;                 /* Forza a 1 */
+    return 0;                   /* Zero size */
+  if (number(num) == 0) {       /* Look for the number */
+    error("Must be a number");/* Not a number */
+    num[0] = 1;                 /* Force to 1 */
   }
   if (num[0] < 0) {
-    error("Tama¤o negativo");
+    error("Negative size");
     num[0] = (-num[0]);
   }
-  needbrack("]");       /* Forza una dimensi¢n */
-  return num[0];        /* y retorna el tama¤o */
+  needbrack("]");       /* Force a dimension */
+  return num[0];        /* and return the size */
 }
 
 /*
-** Compila una funci¢n.
+** Compile a function.
 **
-** Invocada por "parse", esta rutina intenta compilar una funcion
-** a partir de la entrada.
+** Called by "parse", this routine attempts to compile a function
+** from the input.
 */
 newfunc()
 {
@@ -559,45 +559,45 @@ newfunc()
 
   if (symname(n) == 0) {
     if (eof == 0)
-      error("Declaracion o funcion ilegal");
-    kill();                     /* Inv lida la linea */
+      error("Illegal declaration or function");
+    kill();                     /* Invalidate the line */
     return;
   }
-  fnstart = lineno;             /* Recuerda en que linea comenzo la funci¢n */
-  infunc = 1;                   /* Indica que esta dentro de una funci¢n */
-  if (currfn = findglb(n)) {    /* ¨ Ya estaba en la tabla de nombres ? */
+  fnstart = lineno;             /* Remember which line the function started on */
+  infunc = 1;                   /* Indicate that we are inside a function */
+  if (currfn = findglb(n)) {    /* Already in the symbol table? */
     if (currfn[ident] != function)
-      multidef(n);              /* Ya hay una variable con ese nombre */
+      multidef(n);              /* There is already a variable with that name */
     else if (currfn[offset] == function)
-      multidef(n);              /* Se redefinio una funci¢n */
+      multidef(n);              /* A function was redefined */
     else
-      currfn[offset] = function;/* Una funci¢n referenciada antes */
+      currfn[offset] = function;/* A previously referenced function */
   }
 
-  /* No estaba en la tabla, definir c¢mo una funci¢n */
+  /* Not in the table; define as a function */
 
   else
     currfn = addglb(n, function, cint, function);
 
   toconsole();
-  outstr("Compilando ");
+  outstr("Compiling ");
   outstr(currfn + name);
   outstr("()...");
   nl();
   tofile();
 
-  /* Checa que haya parentesis de apertura */
+  /* Check for opening parenthesis */
   if (match("(") == 0)
-    error("Falta un parentesis de apertura");
-  outname(n);                   /* Imprime el nombre de la funci¢n */
+    error("Missing opening parenthesis");
+  outname(n);                   /* Print the function name */
   col();
   nl();
 
-  locptr = startloc;            /* Limpia la tabla de variables locales */
-  argstk = 0;                   /* Inicia la cuenta de argumentos */
-  while (match(")") == 0) {     /* Empieza a contar */
+  locptr = startloc;            /* Clear the local variable table */
+  argstk = 0;                   /* Initialize the argument count */
+  while (match(")") == 0) {     /* Start counting */
 
-    /* Cualquier nombre legal incrementa la cuenta */
+    /* Any valid name increments the count */
 
     if (symname(n)) {
       if (findloc(n))
@@ -607,16 +607,16 @@ newfunc()
 	++argstk;
       }
     } else {
-      error("Nombre ilegal para el argumento");
+      error("Illegal argument name");
       junk();
     }
     blanks();
 
-    /* Si no es parentesis de cierre, debe ser coma */
+    /* If not a closing parenthesis, must be a comma */
 
     if (streq(line + lptr, ")") == 0) {
       if (match(",") == 0)
-	error("Se requiere una coma");
+	error("Comma required");
     }
     if (endst())
       break;
@@ -625,7 +625,7 @@ newfunc()
   argtop = argstk;
   while (argstk) {
 
-    /* Ahora el usuario declara los tipos de los argumentos */
+    /* Now the user declares the argument types */
 
     if (amatch("char", 4)) {
       getarg(cchar, argtop);
@@ -634,18 +634,18 @@ newfunc()
       getarg(cint, argtop);
       ns();
     } else {
-      error("Numero incorrecto de argumentos");
+      error("Incorrect number of arguments");
       break;
     }
   }
 
-  Zsp = 0;              /* Inicializa el apuntador de la pila */
+  Zsp = 0;              /* Initialize the stack pointer */
 
-  litlab = getlabel();  /* Etiqueta para el buffer literal */
-  litptr = 0;           /* Limpia el buffer literal */
+  litlab = getlabel();  /* Label for the literal buffer */
+  litptr = 0;           /* Clear the literal buffer */
 
-  /* Procesa una sentencia, si es un retorno */
-  /* entonces no limpia la pila */
+  /* Process a statement; if it is a return */
+  /* then do not clean the stack */
 
   if(statement() != streturn) {
     modstk(0);
@@ -653,17 +653,17 @@ newfunc()
   }
   dumplits();
 
-  Zsp = 0;              /* Limpia la pila de nuevo */
-  locptr = startloc;    /* Elimina todas las variables locales */
-  infunc = 0;           /* Ahora no esta dentro de una funci¢n */
+  Zsp = 0;              /* Clean the stack again */
+  locptr = startloc;    /* Remove all local variables */
+  infunc = 0;           /* No longer inside a function */
 }
 
 /*
-** Declara los tipos de los argumentos.
+** Declare the types of the arguments.
 */
-getarg(t, top)                  /* Tipo = cchar o cint */
+getarg(t, top)                  /* Type = cchar or cint */
   int t, top;
-{                               /* tope = punto m s alto de la pila */
+{                               /* top = highest point on the stack */
   char n[namesize], *argptr;
   int j;
 
@@ -673,7 +673,7 @@ getarg(t, top)                  /* Tipo = cchar o cint */
     else
       j = variable;
     if (symname(n)) {
-      if (match("[")) {         /* Ignora lo que esta entre [] */
+      if (match("[")) {         /* Ignore what is between [] */
 	while (inbyte() != ']')
 	  if (endst())
 	    break;
@@ -681,30 +681,30 @@ getarg(t, top)                  /* Tipo = cchar o cint */
       }
       if (argptr = findloc(n)) {
 
-	/* Pone el tipo correcto al argumento */
+	/* Set the correct type for the argument */
 
 	argptr[ident] = j;
 	argptr[type] = t;
 
       } else
-	error("Se requiere el nombre de un argumento");
+	error("Argument name required");
     } else
       illname();
 
-    --argstk;                   /* cuenta hacia atras */
+    --argstk;                   /* count backwards */
     if (endst())
       return;
     if (match(",") == 0)
-      error("Se requiere una coma");
+      error("Comma required");
   }
 }
 
 /*
-** Analizador de sentencias.
+** Statement parser.
 **
-** Llamado cuando la sintaxis requiere una
-** sentencia, retorna un n£mero que indica
-** la £ltima sentencia procesada.
+** Called when the syntax requires a
+** statement; returns a number indicating
+** the last statement processed.
 */
 statement()
 {
@@ -736,9 +736,9 @@ statement()
     doasm();
     lastst = stasm;
   }
-  /* Asumir que es una expresi¢n */
+  /* Assume it is an expression */
   else {
-    usaexpr = NO;
+    use_expr = NO;
     expression();
     ns();
     lastst = stexp;
@@ -747,155 +747,155 @@ statement()
 }
 
 /*
-** Checa punto y coma.
+** Check for semicolon.
 **
-** Llamado cuando la sintaxis lo requiere.
+** Called when the syntax requires one.
 */
 ns()
 {
   if (match(";") == 0)
-    error("Falta punto y coma");
+    error("Missing semicolon");
 }
 
 /*
-** Bloque de sentencias.
+** Compound statement.
 */
 compound()
 {
-  int local, pila;
+  int local, stack;
 
-  local = locptr;               /* Variables locales */
-  pila = Zsp;                   /* Pila actual */
-  ++ncmp;                       /* Un nuevo nivel */
-  declloc();                    /* Procesa declaraciones locales */
+  local = locptr;               /* Local variables */
+  stack = Zsp;                   /* Current stack */
+  ++ncmp;                       /* A new level */
+  declloc();                    /* Process local declarations */
   while (match("}") == 0)
-    statement();                /* Procesa sentencias */
-  --ncmp;                       /* Cierra el nivel */
-  locptr = local;               /* Limpia las variables locales */
+    statement();                /* Process statements */
+  --ncmp;                       /* Close the level */
+  locptr = local;               /* Clear local variables */
   if(lastst == streturn) return;
   if(lastst == stbreak) return;
   if(lastst == stcont) return;
-  Zsp = modstk(pila);           /* Limpia la pila */
+  Zsp = modstk(stack);           /* Clean the stack */
 }
 
 /*
-** Sentencia "if"
+** "if" statement
 */
 doif()
 {
   int flab1, flab2;
 
-  flab1 = getlabel();           /* Etiqueta para el salto falso */
-  test(flab1);                  /* Prueba la expresi¢n y salta si es falsa */
-  statement();                  /* Verdadera, procesa sentencias */
-  if (amatch("else", 4) == 0)   /* ¨ if...else ? */
-                                /* "if" simple ... imprimir etiqueta de falso */
+  flab1 = getlabel();           /* Label for the false branch */
+  test(flab1);                  /* Test the expression and jump if false */
+  statement();                  /* True: process statements */
+  if (amatch("else", 4) == 0)   /* if...else? */
+                                /* Simple "if" ... print false label */
   {
     printlabel(flab1);
     col();
     nl();
-    return;                     /* Y vuelve */
+    return;                     /* And return */
   }
-                                /* Una sentencia "if...else" */
-  jump(flab2 = getlabel());     /* Salta alrededor del codigo de else */
+                                /* An "if...else" statement */
+  jump(flab2 = getlabel());     /* Jump around the else code */
   printlabel(flab1);
   col();
-  nl();                         /* Imprime etiqueta falsa */
-  statement();                  /* Procesa el else */
+  nl();                         /* Print false label */
+  statement();                  /* Process the else */
   printlabel(flab2);
   col();
-  nl();                         /* Imprime etiqueta verdadera */
+  nl();                         /* Print true label */
 }
 
 /*
-** Sentencia "while"
+** "while" statement
 */
 dowhile()
 {
-  int wq[4];                    /* Crea una entrada */
+  int wq[4];                    /* Create an entry */
 
-  wq[wqsym] = locptr;           /* Nivel de variables locales */
-  wq[wqsp] = Zsp;               /* Nivel de la pila */
-  wq[wqloop] = getlabel();      /* Etiqueta del bucle */
-  wq[wqlab] = getlabel();       /* Etiqueta de salida */
-  addwhile(wq);                 /* Agrega a la cola (para el break) */
-  printlabel(wq[wqloop]);       /* Etiqueta del bucle */
+  wq[wqsym] = locptr;           /* Local variable level */
+  wq[wqsp] = Zsp;               /* Stack level */
+  wq[wqloop] = getlabel();      /* Loop label */
+  wq[wqlab] = getlabel();       /* Exit label */
+  addwhile(wq);                 /* Add to queue (for break) */
+  printlabel(wq[wqloop]);       /* Loop label */
   col();
   nl();
-  test(wq[wqlab]);              /* Checa la expresi¢n */
-  statement();                  /* Procesa una sentencia */
+  test(wq[wqlab]);              /* Check the expression */
+  statement();                  /* Process a statement */
   if((lastst != streturn) &
      (lastst != stcont) &
      (lastst != stbreak))
-    jump(wq[wqloop]);           /* Vuelve al bucle */
-  printlabel(wq[wqlab]);        /* Etiqueta de salida */
+    jump(wq[wqloop]);           /* Return to the loop */
+  printlabel(wq[wqlab]);        /* Exit label */
   col();
   nl();
-  delwhile();                   /* Borra de la cola */
+  delwhile();                   /* Remove from the queue */
 }
 
 /*
-** Sentencia "return"
+** "return" statement
 */
 doreturn()
 {
-  /* Checa si hay una expresi¢n */
+  /* Check whether there is an expression */
   if (endst() == 0) {
-    usaexpr = SI;
+    use_expr = YES;
     expression();
   }
-  modstk(0);                    /* Limpia la pila */
-  zret();                       /* Sale de la funci¢n */
+  modstk(0);                    /* Clean the stack */
+  zret();                       /* Exit the function */
 }
 
 /*
-** Sentencia "break"
+** "break" statement
 */
 dobreak()
 {
   int *ptr;
 
-  /* Ve si hay un while abierto */
+  /* See if there is an open while */
   if ((ptr = readwhile()) == 0)
     return;                     /* No */
-  modstk((ptr[wqsp]));          /* Si, arregla la pila */
-  jump(ptr[wqlab]);             /* Salta a la etiqueta de salida */
+  modstk((ptr[wqsp]));          /* Yes, fix the stack */
+  jump(ptr[wqlab]);             /* Jump to the exit label */
 }
 
 /*
-** Sentencia "continue"
+** "continue" statement
 */
 docont()
 {
   int *ptr;
 
-  /* Ve si hay un while abierto */
+  /* See if there is an open while */
   if ((ptr = readwhile()) == 0)
     return;                     /* No */
-  modstk((ptr[wqsp]));          /* Si, arregla la pila */
-  jump(ptr[wqloop]);            /* Salta a la etiqueta de salida */
+  modstk((ptr[wqsp]));          /* Yes, fix the stack */
+  jump(ptr[wqloop]);            /* Jump to the exit label */
 }
 
 /*
-** Seudo-sentencia "asm"
+** "asm" pseudo-statement
 **
-** Entra en un modo en el que el lenguaje ensamblador
-** es pasado intacto a traves del analizador.
+** Enters a mode in which assembly language
+** is passed through the parser untouched.
 */
 doasm()
 {
-  cmode = 0;                    /* Marca modo ensamblador */
+  cmode = 0;                    /* Mark assembler mode */
   while (1) {
-    inline();                   /* Obtiene y imprime lineas */
+    inline();                   /* Get and print lines */
     if (match("#endasm"))
-      break;                    /* hasta que... */
+      break;                    /* until... */
     if (eof)
       break;
     outstr(line);
     nl();
   }
-  kill();                       /* Limpia la linea */
-  cmode = 1;                    /* Vuelve al modo de an lisis */
+  kill();                       /* Clear the line */
+  cmode = 1;                    /* Return to parse mode */
 }
 
 junk()
@@ -920,14 +920,14 @@ endst()
 
 illname()
 {
-  error("Nombre ilegal");
+  error("Illegal name");
   junk();
 }
 
 multidef(sname)
   char *sname;
 {
-  error("Nombre redefinido");
+  error("Redefined name");
   comment();
   outstr(sname);
   nl();
@@ -937,7 +937,7 @@ needbrack(str)
   char *str;
 {
   if (match(str) == 0) {
-    error("Falta un ");
+    error("Missing ");
     comment();
     outstr(str);
     nl();
@@ -946,7 +946,7 @@ needbrack(str)
 
 needlval()
 {
-  error("Debe ser un valor-l");
+  error("Must be an lvalue");
 }
 
 findglb(sname)
@@ -986,11 +986,11 @@ addglb(sname, id, typ, value)
   if (cptr = findglb(sname))
     return cptr;
   if (glbptr >= endglb) {
-    error("Tabla global llena");
+    error("Global table full");
     return 0;
   }
   cptr = ptr = glbptr;
-  while (an(*ptr++ = *sname++));/* Copia el nombre */
+  while (an(*ptr++ = *sname++));/* Copy the name */
   cptr[ident] = id;
   cptr[type] = typ;
   cptr[storage] = statik;
@@ -1011,11 +1011,11 @@ addloc(sname, id, typ, value)
   if (cptr = findloc(sname))
     return cptr;
   if (locptr >= endloc) {
-    error("Tabla local llena");
+    error("Local table full");
     return 0;
   }
   cptr = ptr = locptr;
-  while (an(*ptr++ = *sname++));/* Copia el nombre */
+  while (an(*ptr++ = *sname++));/* Copy the name */
   cptr[ident] = id;
   cptr[type] = typ;
   cptr[storage] = stkloc;
@@ -1028,7 +1028,7 @@ addloc(sname, id, typ, value)
 }
 
 
-/* Prueba si la proxima cadena de entrada es un nombre legal */
+/* Test if the next input string is a valid name */
 symname(sname)
   char *sname;
 {
@@ -1045,7 +1045,7 @@ symname(sname)
   return 1;
 }
 
-/* Prueba si el caracter dado es una letra */
+/* Test if the given character is a letter */
 alpha(c)
   int c;
 {
@@ -1055,7 +1055,7 @@ alpha(c)
 	  (c == '_'));
 }
 
-/* Prueba si el caracter dado es un n£mero */
+/* Test if the given character is a digit */
 numeric(c)
   int c;
 {
@@ -1063,14 +1063,14 @@ numeric(c)
   return ((c >= '0') & (c <= '9'));
 }
 
-/* Prueba si el caracter dado es alfanum‚rico */
+/* Test if the given character is alphanumeric */
 an(c)
   char c;
 {
   return ((alpha(c)) | (numeric(c)));
 }
 
-/* Imprime un retorno de carro y una cadena a la consola */
+/* Print a carriage return and a string to the console */
 pl(str)
   char *str;
 {
@@ -1090,7 +1090,7 @@ addwhile(ptr)
   int k;
 
   if (wqptr == wqmax) {
-    error("Demasiados bucles activos");
+    error("Too many active loops");
     return;
   }
   k = 0;
@@ -1107,7 +1107,7 @@ delwhile()
 readwhile()
 {
   if (wqptr == wq) {
-    error("No hay bucles activos");
+    error("No active loops");
     return 0;
   } else
     return (wqptr - wqsiz);
@@ -1170,8 +1170,8 @@ inline()
 	break;
       line[lptr++] = k;
     }
-    line[lptr] = 0;     /* Agrega un caracter nulo */
-    lineno++;           /* Se ha leido una l¡nea m s */
+    line[lptr] = 0;     /* Append a null character */
+    lineno++;           /* One more line has been read */
     if (k <= 0) {
       fclose(unit);
       if (input2)
@@ -1201,13 +1201,13 @@ preprocess()
   mptr = lptr = 0;
   while (ch()) {
     if ((ch() == ' ') | (ch() == 9))
-      predel();
+      pre_space();
     else if (ch() == '"')
-      prequote();
+      pre_quote();
     else if (ch() == 39)
-      preapos();
+      pre_apos();
     else if ((ch() == '/') & (nch() == '*'))
-      precomm();
+      pre_comment();
     else if (alpha(ch())) {
       k = 0;
       while (an(ch())) {
@@ -1229,7 +1229,7 @@ preprocess()
   }
   keepch(0);
   if (mptr >= mpmax)
-    error("Linea muy larga");
+    error("Line too long");
   lptr = mptr = 0;
   while (line[lptr++] = mline[mptr++]);
   lptr = 0;
@@ -1244,7 +1244,7 @@ keepch(c)
   return c;
 }
 
-predel()
+pre_space()
 {
   keepch(' ');
   while ((ch() == ' ') |
@@ -1252,13 +1252,13 @@ predel()
     gch();
 }
 
-prequote()
+pre_quote()
 {
   keepch(ch());
   gch();
   while ((ch() != '"') | ((line[lptr - 1] == 92) & (line[lptr - 2] != 92))) {
     if (ch() == 0) {
-      error("Faltan comillas");
+      error("Missing closing quote");
       break;
     }
     keepch(gch());
@@ -1267,13 +1267,13 @@ prequote()
   keepch('"');
 }
 
-preapos()
+pre_apos()
 {
   keepch(39);
   gch();
   while ((ch() != 39) | ((line[lptr - 1] == 92) & (line[lptr - 2] != 92))) {
     if (ch() == 0) {
-      error("Falta un apostrofe");
+      error("Missing apostrophe");
       break;
     }
     keepch(gch());
@@ -1282,7 +1282,7 @@ preapos()
   keepch(39);
 }
 
-precomm()
+pre_comment()
 {
   lptr = lptr + 2;
   while (((ch() == '*') &
@@ -1313,7 +1313,7 @@ addmac()
     gch();
   while (putmac(gch()));
   if (macptr >= macmax)
-    error("Tabla de macros llena");
+    error("Macro table full");
 }
 
 putmac(c)
@@ -1342,14 +1342,14 @@ findmac(sname)
   return 0;
 }
 
-/* Desvia la salida a la consola */
+/* Redirect output to console */
 toconsole()
 {
   saveout = output;
   output = 0;
 }
 
-/* Regresa la salida al archivo */
+/* Redirect output back to file */
 tofile()
 {
   if (saveout)
@@ -1365,7 +1365,7 @@ outbyte(c)
   if (output) {
     if ((fputc(c, output)) <= 0) {
       closeout();
-      error("Error al escribir");
+      error("Write error");
       abort();
     }
   } else
@@ -1401,13 +1401,13 @@ error(ptr)
   char junk[81];
 
   toconsole();
-  outstr("L¡nea ");
+  outstr("Line ");
   outdec(lineno);
   outstr(", ");
   if (infunc == 0)
     outbyte('(');
   if (currfn == NULL)
-    outstr("comienzo del archivo");
+    outstr("beginning of file");
   else
     outstr(currfn + name);
   if (infunc == 0)
@@ -1421,7 +1421,7 @@ error(ptr)
   outstr(line);
   nl();
 
-  k = 0;                /* Busca la posici¢n del error */
+  k = 0;                /* Find the error position */
   while (k < lptr) {
     if (line[k++] == 9)
       outbyte(9);
@@ -1433,12 +1433,12 @@ error(ptr)
   ++errcnt;
 
   if (errstop) {
-    pl("Continuar (Si, No, Pasar de largo) ? ");
+    pl("Continue? (Yes, No, Skip errors) ");
     gets(junk);
     k = junk[0];
     if ((k == 'N') | (k == 'n'))
       abort();
-    if ((k == 'P') | (k == 'p'))
+    if ((k == 'S') | (k == 's'))
       errstop = 0;
   }
   tofile();
@@ -1556,7 +1556,7 @@ outdec(number)
   }
 }
 
-/* Retorna el tama¤o de una cadena. */
+/* Return the length of a string. */
 strlen(s)
   char *s;
 {
@@ -1568,8 +1568,8 @@ strlen(s)
   return (s - t);
 }
 
-/* Conversi¢n a m yusculas. */
-raise(c)
+/* Convert to uppercase. */
+to_upper(c)
   char c;
 {
   if ((c >= 'a') & (c <= 'z'))
@@ -1580,7 +1580,7 @@ raise(c)
 /*
 ** Evaluador de Expresiones.
 **
-** por Oscar Toledo Gutierrez.
+** by Oscar Toledo Gutierrez.
 **
 ** (c) Copyright 1995 Oscar Toledo G.
 */
@@ -1588,20 +1588,20 @@ raise(c)
 #define N_OR      1
 #define N_XOR     2
 #define N_AND     3
-#define N_IGUAL   4
-#define N_CIGUAL  5
-#define N_MAYOR   6
-#define N_CSUMA   7
-#define N_NULO    8
+#define N_EQ   4
+#define N_CEQ  5
+#define N_GT   6
+#define N_CADD   7
+#define N_NULL    8
 #define N_STNL    9
-#define N_SMAYOR  10
+#define N_SGT  10
 #define N_FUNC    11
 #define N_FUNCI   12
 #define N_PAR     13
 #define N_CD      14
 #define N_CI      15
-#define N_SUMA    16
-#define N_RESTA   17
+#define N_ADD    16
+#define N_SUB   17
 #define N_MUL     18
 #define N_DIV     19
 #define N_MOD     20
@@ -1617,40 +1617,40 @@ raise(c)
 #define N_CONST   30
 #define N_LIT     31
 #define N_CBYTE   32
-#define N_CPAL    33
+#define N_CWORD    33
 #define N_LDLP    34
 #define N_LDL     35
 #define N_LDNLP   36
-#define N_GBYTE   37
-#define N_GPAL    38
+#define N_SBYTE   37
+#define N_SWORD    38
 
-#define TAM_ARBOL 128
+#define TREE_SIZE 128
 
-int nodo_izq[TAM_ARBOL];
-int nodo_der[TAM_ARBOL];
-int oper[TAM_ARBOL];
-int esp[TAM_ARBOL];
-int regs[TAM_ARBOL];
-int ultimo_nodo;
-int raiz_arbol;
+int node_left[TREE_SIZE];
+int node_right[TREE_SIZE];
+int oper[TREE_SIZE];
+int stk[TREE_SIZE];
+int regs[TREE_SIZE];
+int last_node;
+int tree_root;
 
 expression()
 {
   int lval[2];
 
-  ultimo_nodo = 0;
+  last_node = 0;
   if (heir1(lval))
     rvalue(lval);
-  etiqueta(ultimo_nodo);
-  raiz_arbol = ultimo_nodo;
-  gen_codigo(ultimo_nodo);
+  annotate(last_node);
+  tree_root = last_node;
+  gen_code(last_node);
 }
 
 heir1(lval)
   int lval[];
 {
   int k, lval2[2];
-  int der;
+  int right;
   char *ap;
 
   k = heir2(lval);
@@ -1658,15 +1658,15 @@ heir1(lval)
   if (ch() != '=')
     return k;
   ++lptr;
-  der = ultimo_nodo;
+  right = last_node;
   if (k == 0)
     needlval();
   if (heir1(lval2))
     rvalue(lval2);
   if (lval[1] == cint)
-    crea_nodo(N_GPAL, ultimo_nodo, der, 0);
+    make_node(N_SWORD, last_node, right, 0);
   else
-    crea_nodo(N_GBYTE, ultimo_nodo, der, 0);
+    make_node(N_SBYTE, last_node, right, 0);
   return 0;
 }
 
@@ -1674,7 +1674,7 @@ heir2(lval)
   int lval[];
 {
   int k, lval2[2];
-  int izq;
+  int left;
 
   k = heir3(lval);
   blanks();
@@ -1683,10 +1683,10 @@ heir2(lval)
   if (k)
     rvalue(lval);
   while (match("|")) {
-    izq = ultimo_nodo;
+    left = last_node;
     if (heir3(lval2))
       rvalue(lval2);
-    crea_nodo(N_OR, izq, ultimo_nodo, 0);
+    make_node(N_OR, left, last_node, 0);
   }
   return 0;
 }
@@ -1695,7 +1695,7 @@ heir3(lval)
   int lval[];
 {
   int k, lval2[2];
-  int izq;
+  int left;
 
   k = heir4(lval);
   blanks();
@@ -1704,10 +1704,10 @@ heir3(lval)
   if (k)
     rvalue(lval);
   while (match("^")) {
-    izq = ultimo_nodo;
+    left = last_node;
     if (heir4(lval2))
       rvalue(lval2);
-    crea_nodo(N_XOR, izq, ultimo_nodo, 0);
+    make_node(N_XOR, left, last_node, 0);
   }
   return 0;
 }
@@ -1716,7 +1716,7 @@ heir4(lval)
   int lval[];
 {
   int k, lval2[2];
-  int izq;
+  int left;
 
   k = heir5(lval);
   blanks();
@@ -1725,17 +1725,17 @@ heir4(lval)
   if (k)
     rvalue(lval);
   while (match("&")) {
-    izq = ultimo_nodo;
+    left = last_node;
     if (heir5(lval2))
       rvalue(lval2);
-    crea_nodo(N_AND, izq, ultimo_nodo, 0);
+    make_node(N_AND, left, last_node, 0);
   }
   return 0;
 }
 
 heir5(lval) int lval[]; {
   int k, lval2[2];
-  int izq;
+  int left;
 
   k = heir6(lval);
   blanks();
@@ -1745,36 +1745,36 @@ heir5(lval) int lval[]; {
   if (k)
     rvalue(lval);
   while (1) {
-    izq = ultimo_nodo;
+    left = last_node;
     if (match("==")) {
       if (heir6(lval2))
         rvalue(lval2);
-      if(oper[ultimo_nodo] == N_CONST) {
-        if(oper[izq] == N_CONST)
-          crea_nodo(N_CONST, 0, 0, esp[izq] == esp[ultimo_nodo]);
+      if(oper[last_node] == N_CONST) {
+        if(oper[left] == N_CONST)
+          make_node(N_CONST, 0, 0, stk[left] == stk[last_node]);
         else
-          crea_nodo(N_CIGUAL, izq, 0, esp[ultimo_nodo]);
+          make_node(N_CEQ, left, 0, stk[last_node]);
       }
-      else if(oper[izq] == N_CONST)
-        crea_nodo(N_CIGUAL, ultimo_nodo, 0, esp[izq]);
-      else crea_nodo(N_IGUAL, izq, ultimo_nodo, 0);
+      else if(oper[left] == N_CONST)
+        make_node(N_CEQ, last_node, 0, stk[left]);
+      else make_node(N_EQ, left, last_node, 0);
     } else if (match("!=")) {
       if (heir6(lval2))
         rvalue(lval2);
-      if(oper[ultimo_nodo] == N_CONST) {
-        if(oper[izq] == N_CONST)
-          crea_nodo(N_CONST, 0, 0, esp[izq] != esp[ultimo_nodo]);
+      if(oper[last_node] == N_CONST) {
+        if(oper[left] == N_CONST)
+          make_node(N_CONST, 0, 0, stk[left] != stk[last_node]);
         else {
-          crea_nodo(N_CIGUAL, izq, 0, esp[ultimo_nodo]);
-          crea_nodo(N_NOT, ultimo_nodo, 0, 0);
+          make_node(N_CEQ, left, 0, stk[last_node]);
+          make_node(N_NOT, last_node, 0, 0);
         }
       }
-      else if(oper[izq] == N_CONST) {
-        crea_nodo(N_CIGUAL, ultimo_nodo, 0, esp[izq]);
-        crea_nodo(N_NOT, ultimo_nodo, 0, 0);
+      else if(oper[left] == N_CONST) {
+        make_node(N_CEQ, last_node, 0, stk[left]);
+        make_node(N_NOT, last_node, 0, 0);
       } else {
-        crea_nodo(N_IGUAL, izq, ultimo_nodo, 0);
-        crea_nodo(N_NOT, ultimo_nodo, 0, 0);
+        make_node(N_EQ, left, last_node, 0);
+        make_node(N_NOT, last_node, 0, 0);
       }
     } else
       return 0;
@@ -1821,61 +1821,61 @@ heir6wrk(k, lval)
   int k, lval[];
 {
   int lval2[2];
-  int izq;
+  int left;
 
-  izq = ultimo_nodo;
+  left = last_node;
   if (heir7(lval2))
     rvalue(lval2);
   if (cptr = lval[0])
     if (cptr[ident] == pointer) {
-      heir6op(izq, k);
+      heir6op(left, k);
       return;
     }
   if (cptr = lval2[0])
     if (cptr[ident] == pointer) {
-      heir6op(izq, k);
+      heir6op(left, k);
       return;
     }
   if(k == 4) {
-    if((oper[izq] == N_CONST) & (oper[ultimo_nodo] == N_CONST))
-      crea_nodo(N_CONST, 0, 0, esp[izq] > esp[ultimo_nodo]);
+    if((oper[left] == N_CONST) & (oper[last_node] == N_CONST))
+      make_node(N_CONST, 0, 0, stk[left] > stk[last_node]);
     else
-      crea_nodo(N_MAYOR, izq, ultimo_nodo, 0);
+      make_node(N_GT, left, last_node, 0);
   }
   else if(k == 3) {
-    if((oper[izq] == N_CONST) & (oper[ultimo_nodo] == N_CONST))
-      crea_nodo(N_CONST, 0, 0, esp[izq] < esp[ultimo_nodo]);
+    if((oper[left] == N_CONST) & (oper[last_node] == N_CONST))
+      make_node(N_CONST, 0, 0, stk[left] < stk[last_node]);
     else
-      crea_nodo(N_MAYOR, ultimo_nodo, izq, 0);
+      make_node(N_GT, last_node, left, 0);
   }
   else if(k == 1) {
-    if((oper[izq] == N_CONST) & (oper[ultimo_nodo] == N_CONST))
-      crea_nodo(N_CONST, 0, 0, esp[izq] <= esp[ultimo_nodo]);
+    if((oper[left] == N_CONST) & (oper[last_node] == N_CONST))
+      make_node(N_CONST, 0, 0, stk[left] <= stk[last_node]);
     else {
-      crea_nodo(N_MAYOR, izq, ultimo_nodo, 0);
-      crea_nodo(N_NOT, ultimo_nodo, 0);
+      make_node(N_GT, left, last_node, 0);
+      make_node(N_NOT, last_node, 0);
     }
   } else {
-    if((oper[izq] == N_CONST) & (oper[ultimo_nodo] == N_CONST))
-      crea_nodo(N_CONST, 0, 0, esp[izq] >= esp[ultimo_nodo]);
+    if((oper[left] == N_CONST) & (oper[last_node] == N_CONST))
+      make_node(N_CONST, 0, 0, stk[left] >= stk[last_node]);
     else {
-      crea_nodo(N_MAYOR, ultimo_nodo, izq, 0);
-      crea_nodo(N_NOT, ultimo_nodo, 0);
+      make_node(N_GT, last_node, left, 0);
+      make_node(N_NOT, last_node, 0);
     }
   }
 }
 
-heir6op(izq, k)
-  int izq, k;
+heir6op(left, k)
+  int left, k;
 {
-  if(k == 4) crea_nodo(N_SMAYOR, izq, ultimo_nodo, 0);
-  else if(k == 3) crea_nodo(N_SMAYOR, ultimo_nodo, izq, 0);
+  if(k == 4) make_node(N_SGT, left, last_node, 0);
+  else if(k == 3) make_node(N_SGT, last_node, left, 0);
   else if(k == 1) {
-    crea_nodo(N_SMAYOR, izq, ultimo_nodo, 0);
-    crea_nodo(N_NOT, ultimo_nodo, 0);
+    make_node(N_SGT, left, last_node, 0);
+    make_node(N_NOT, last_node, 0);
   } else {
-    crea_nodo(N_SMAYOR, ultimo_nodo, izq, 0);
-    crea_nodo(N_NOT, ultimo_nodo, 0);
+    make_node(N_SGT, last_node, left, 0);
+    make_node(N_NOT, last_node, 0);
   }
 }
 
@@ -1883,7 +1883,7 @@ heir7(lval)
   int lval[];
 {
   int k, lval2[2];
-  int izq;
+  int left;
 
   k = heir8(lval);
   blanks();
@@ -1893,21 +1893,21 @@ heir7(lval)
   if (k)
     rvalue(lval);
   while (1) {
-    izq = ultimo_nodo;
+    left = last_node;
     if (match(">>")) {
       if (heir8(lval2))
 	rvalue(lval2);
-      if((oper[izq] == N_CONST) & (oper[ultimo_nodo] == N_CONST))
-        crea_nodo(N_CONST, 0, 0, esp[izq] >> esp[ultimo_nodo]);
+      if((oper[left] == N_CONST) & (oper[last_node] == N_CONST))
+        make_node(N_CONST, 0, 0, stk[left] >> stk[last_node]);
       else
-        crea_nodo(N_CD, izq, ultimo_nodo, 0);
+        make_node(N_CD, left, last_node, 0);
     } else if (match("<<")) {
       if (heir8(lval2))
 	rvalue(lval2);
-      if((oper[izq] == N_CONST) & (oper[ultimo_nodo] == N_CONST))
-        crea_nodo(N_CONST, 0, 0, esp[izq] << esp[ultimo_nodo]);
+      if((oper[left] == N_CONST) & (oper[last_node] == N_CONST))
+        make_node(N_CONST, 0, 0, stk[left] << stk[last_node]);
       else
-        crea_nodo(N_CI, izq, ultimo_nodo, 0);
+        make_node(N_CI, left, last_node, 0);
     } else
       return 0;
   }
@@ -1917,7 +1917,7 @@ heir8(lval)
   int lval[];
 {
   int k, lval2[2];
-  int izq;
+  int left;
 
   k = heir9(lval);
   blanks();
@@ -1926,35 +1926,35 @@ heir8(lval)
   if (k)
     rvalue(lval);
   while (1) {
-    izq = ultimo_nodo;
+    left = last_node;
     if (match("+")) {
       if (heir9(lval2))
         rvalue(lval2);
       if (cptr = lval[0])
         if ((cptr[ident] == pointer) &
             (cptr[type] == cint))
-          doublereg();
-      if((oper[izq] == N_CONST) & (oper[ultimo_nodo] == N_CONST))
-        crea_nodo(N_CONST, 0, 0, esp[izq] + esp[ultimo_nodo]);
-      else if(oper[ultimo_nodo] == N_CONST)
-        crea_nodo(N_CSUMA, izq, 0, esp[ultimo_nodo]);
-      else if(oper[izq] == N_CONST)
-        crea_nodo(N_CSUMA, ultimo_nodo, 0, esp[izq]);
+          scale_by_word();
+      if((oper[left] == N_CONST) & (oper[last_node] == N_CONST))
+        make_node(N_CONST, 0, 0, stk[left] + stk[last_node]);
+      else if(oper[last_node] == N_CONST)
+        make_node(N_CADD, left, 0, stk[last_node]);
+      else if(oper[left] == N_CONST)
+        make_node(N_CADD, last_node, 0, stk[left]);
       else
-        crea_nodo(N_SUMA, izq, ultimo_nodo, 0);
+        make_node(N_ADD, left, last_node, 0);
     } else if (match("-")) {
       if (heir9(lval2))
         rvalue(lval2);
       if (cptr = lval[0])
         if ((cptr[ident] == pointer) &
             (cptr[type] == cint))
-          doublereg();
-      if((oper[izq] == N_CONST) & (oper[ultimo_nodo] == N_CONST))
-        crea_nodo(N_CONST, 0, 0, esp[izq] - esp[ultimo_nodo]);
-      else if(oper[ultimo_nodo] == N_CONST)
-        crea_nodo(N_CSUMA, izq, 0, -esp[ultimo_nodo]);
+          scale_by_word();
+      if((oper[left] == N_CONST) & (oper[last_node] == N_CONST))
+        make_node(N_CONST, 0, 0, stk[left] - stk[last_node]);
+      else if(oper[last_node] == N_CONST)
+        make_node(N_CADD, left, 0, -stk[last_node]);
       else
-        crea_nodo(N_RESTA, izq, ultimo_nodo, 0);
+        make_node(N_SUB, left, last_node, 0);
     } else
       return 0;
   }
@@ -1964,7 +1964,7 @@ heir9(lval)
   int lval[];
 {
   int k, lval2[2];
-  int izq;
+  int left;
 
   k = heir10(lval);
   blanks();
@@ -1974,28 +1974,28 @@ heir9(lval)
   if (k)
     rvalue(lval);
   while (1) {
-    izq = ultimo_nodo;
+    left = last_node;
     if (match("*")) {
       if (heir10(lval2))
         rvalue(lval2);
-      if((oper[izq] == N_CONST) & (oper[ultimo_nodo] == N_CONST))
-        crea_nodo(N_CONST, 0, 0, esp[izq] * esp[ultimo_nodo]);
+      if((oper[left] == N_CONST) & (oper[last_node] == N_CONST))
+        make_node(N_CONST, 0, 0, stk[left] * stk[last_node]);
       else
-        crea_nodo(N_MUL, izq, ultimo_nodo, 0);
+        make_node(N_MUL, left, last_node, 0);
     } else if (match("/")) {
       if (heir10(lval2))
         rvalue(lval2);
-      if((oper[izq] == N_CONST) & (oper[ultimo_nodo] == N_CONST))
-        crea_nodo(N_CONST, 0, 0, esp[izq] / esp[ultimo_nodo]);
+      if((oper[left] == N_CONST) & (oper[last_node] == N_CONST))
+        make_node(N_CONST, 0, 0, stk[left] / stk[last_node]);
       else
-        crea_nodo(N_DIV, izq, ultimo_nodo, 0);
+        make_node(N_DIV, left, last_node, 0);
     } else if (match("%")) {
       if (heir10(lval2))
         rvalue(lval2);
-      if((oper[izq] == N_CONST) & (oper[ultimo_nodo] == N_CONST))
-        crea_nodo(N_CONST, 0, 0, esp[izq] % esp[ultimo_nodo]);
+      if((oper[left] == N_CONST) & (oper[last_node] == N_CONST))
+        make_node(N_CONST, 0, 0, stk[left] % stk[last_node]);
       else
-        crea_nodo(N_MOD, izq, ultimo_nodo, 0);
+        make_node(N_MOD, left, last_node, 0);
     } else
       return 0;
   }
@@ -2019,33 +2019,33 @@ heir10(lval)
   } else if (match("-")) {
     if(heir10(lval))
       rvalue(lval);
-    if(oper[ultimo_nodo] == N_CONST)
-      esp[ultimo_nodo] = -esp[ultimo_nodo];
+    if(oper[last_node] == N_CONST)
+      stk[last_node] = -stk[last_node];
     else
-      crea_nodo(N_NEG, ultimo_nodo, 0, 0);
+      make_node(N_NEG, last_node, 0, 0);
     return 0;
   } else if (match("~")) {
     if(heir10(lval))
       rvalue(lval);
-    if(oper[ultimo_nodo] == N_CONST)
-      esp[ultimo_nodo] = ~esp[ultimo_nodo];
+    if(oper[last_node] == N_CONST)
+      stk[last_node] = ~stk[last_node];
     else
-      crea_nodo(N_COM, ultimo_nodo, 0, 0);
+      make_node(N_COM, last_node, 0, 0);
     return 0;
   } else if (match("!")) {
     if(heir10(lval))
       rvalue(lval);
-    if(oper[ultimo_nodo] == N_CONST)
-      esp[ultimo_nodo] = !esp[ultimo_nodo];
+    if(oper[last_node] == N_CONST)
+      stk[last_node] = !stk[last_node];
     else
-      crea_nodo(N_NOT, ultimo_nodo, 0, 0);
+      make_node(N_NOT, last_node, 0, 0);
     return 0;
   } else if (match("*")) {
     heir10as(lval);
     return 1;
   } else if (match("&")) {
     if(heir10(lval) == 0) {
-      error("Direcci¢n ilegal");
+      error("Illegal address");
       return 0;
     }
     if (lval[1])
@@ -2076,9 +2076,9 @@ heir10inc(lval)
   ptr = lval[0];
   if ((ptr[ident] == pointer) &
       (ptr[type] == cint))
-    crea_nodo(N_INC, ultimo_nodo, 0, 4);
+    make_node(N_INC, last_node, 0, 4);
   else
-    crea_nodo(N_INC, ultimo_nodo, 0, 1);
+    make_node(N_INC, last_node, 0, 1);
 }
 
 heir10dec(lval)
@@ -2089,9 +2089,9 @@ heir10dec(lval)
   ptr = lval[0];
   if ((ptr[ident] == pointer) &
       (ptr[type] == cint))
-    crea_nodo(N_INC, ultimo_nodo, 0, -4);
+    make_node(N_INC, last_node, 0, -4);
   else
-    crea_nodo(N_INC, ultimo_nodo, 0, -1);
+    make_node(N_INC, last_node, 0, -1);
 }
 
 heir10as(lval)
@@ -2125,9 +2125,9 @@ heir10id(lval)
   ptr = lval[0];
   if ((ptr[ident] == pointer) &
       (ptr[type] == cint))
-    crea_nodo(N_PINC, ultimo_nodo, 0, 4);
+    make_node(N_PINC, last_node, 0, 4);
   else
-    crea_nodo(N_PINC, ultimo_nodo, 0, 1);
+    make_node(N_PINC, last_node, 0, 1);
 }
 
 heir10di(lval)
@@ -2138,15 +2138,15 @@ heir10di(lval)
   ptr = lval[0];
   if ((ptr[ident] == pointer) &
       (ptr[type] == cint))
-    crea_nodo(N_PINC, ultimo_nodo, 0, -4);
+    make_node(N_PINC, last_node, 0, -4);
   else
-    crea_nodo(N_PINC, ultimo_nodo, 0, -1);
+    make_node(N_PINC, last_node, 0, -1);
 }
 
 heir11(lval)
   int lval[];
 {
-  int k, etiq, izq;
+  int k, etiq, left;
   char *ptr;
   int lval2[2];
 
@@ -2157,30 +2157,30 @@ heir11(lval)
     while (1) {
       if (match("[")) {
         if (ptr == 0) {
-          error("No se puede usar subscripto");
+          error("Cannot use subscript");
           junk();
           needbrack("]");
           return 0;
         } else if (ptr[ident] == pointer)
           rvalue(lval);
         else if (ptr[ident] != array) {
-          error("No se puede usar subscripto");
+          error("Cannot use subscript");
           k = 0;
         }
-        izq = ultimo_nodo;
+        left = last_node;
         if (heir1(lval2))
           rvalue(lval2);
         needbrack("]");
         if (ptr[type] == cint) {
-          if (oper[ultimo_nodo] == N_CONST)
-            crea_nodo(N_LDNLP, izq, 0, esp[ultimo_nodo]);
+          if (oper[last_node] == N_CONST)
+            make_node(N_LDNLP, left, 0, stk[last_node]);
           else
-            crea_nodo(N_IXP, ultimo_nodo, izq, 0);
+            make_node(N_IXP, last_node, left, 0);
         } else {
-          if (oper[ultimo_nodo] == N_CONST)
-            crea_nodo(N_CSUMA, izq, 0, esp[ultimo_nodo]);
+          if (oper[last_node] == N_CONST)
+            make_node(N_CADD, left, 0, stk[last_node]);
           else
-            crea_nodo(N_SUMA, ultimo_nodo, izq, 0);
+            make_node(N_ADD, last_node, left, 0);
         }
         lval[1] = ptr[type];
         k = 1;
@@ -2199,7 +2199,7 @@ heir11(lval)
   if (ptr == 0)
     return k;
   if (ptr[ident] == function) {
-    crea_nodo(N_APFUNC, 0, 0, ptr);
+    make_node(N_APFUNC, 0, 0, ptr);
     return 0;
   }
   return k;
@@ -2230,7 +2230,7 @@ primary(lval)
     }
     if (ptr = findglb(sname)) {
       if (ptr[ident] != function) {
-        outpos(0, ptr);
+        emit_global_addr(0, ptr);
         lval[0] = ptr;
         lval[1] = ptr[type];
         if (ptr[ident] == pointer)
@@ -2248,79 +2248,79 @@ primary(lval)
   if (constant(num))
     return (lval[0] = lval[1] = 0);
   else {
-    error("Expresion invalida");
-    crea_nodo(N_CONST, 0, 0, 0);
+    error("Invalid expression");
+    make_node(N_CONST, 0, 0, 0);
     junk();
     return 0;
   }
 }
 
 /*
-** Compila una llamada a una funcion
+** Compile a function call
 **
-** Invocada por "heir11", esta funcion llama a la funcion
-** nombra o a una funcion indirecta.
+** Called by "heir11", this function calls the named function
+** or an indirect function.
 */
 callfunction(ptr)
   char *ptr;
 {
   int lval[2];
-  int anterior, primero;
-  int izq;
+  int prev, first;
+  int left;
 
-  anterior = primero = 0;
-  blanks();             /* Ya ha sido tomado el parentesis inicial */
+  prev = first = 0;
+  blanks();             /* The opening parenthesis has already been consumed */
   if (ptr == 0)
-    izq = ultimo_nodo;  /* Llamada indirecta */
+    left = last_node;  /* Indirect call */
   while (streq(line + lptr, ")") == 0) {
     if (endst())
       break;
     if (heir1(lval))
-      rvalue(lval);     /* Obtiene un argumento */
-    crea_nodo(N_PAR, ultimo_nodo, 0, 0);
-    if (primero == 0)
-      primero = ultimo_nodo;
-    if (anterior != 0)
-      esp[anterior] = ultimo_nodo;
-    anterior = ultimo_nodo;
+      rvalue(lval);     /* Get an argument */
+    make_node(N_PAR, last_node, 0, 0);
+    if (first == 0)
+      first = last_node;
+    if (prev != 0)
+      stk[prev] = last_node;
+    prev = last_node;
     if (match(",") == 0)
       break;
     blanks();
   }
   needbrack(")");
   if (ptr == 0)
-    crea_nodo(N_FUNCI, primero, 0, izq);
+    make_node(N_FUNCI, first, 0, left);
   else
-    crea_nodo(N_FUNC, primero, 0, ptr);
+    make_node(N_FUNC, first, 0, ptr);
 }
 
 rvalue(lval)
   int lval[];
 {
   if (lval[1] == cchar)
-    crea_nodo(N_CBYTE, ultimo_nodo, 0, 0);
+    make_node(N_CBYTE, last_node, 0, 0);
   else
-    crea_nodo(N_CPAL, ultimo_nodo, 0, 0);
+    make_node(N_CWORD, last_node, 0, 0);
 }
 
-/* Carga la direcci¢n de una variable local */
+/* Load the address of a local variable */
 getloc(sym)
   char *sym;
 {
-  crea_nodo(N_LDLP, 0, 0, ((sym[offset] & 255) +
+  make_node(N_LDLP, 0, 0, ((sym[offset] & 255) +
 			   ((sym[offset + 1] & 255) << 8) +
 			   ((sym[offset + 2] & 255) << 16) +
 			   ((sym[offset + 3] & 255) << 24)));
 }
 
-/* Carga la dir. de las variables estaticas */
-enlace()
+/* Load the address of static variables */
+load_static_base()
 {
-  crea_nodo(N_LDL, 0, 0, 1);
+  make_node(N_LDL, 0, 0, 1);
 }
 
-/* Operaciones con memoria global */
-outpos(tipo, var)
+/* Global memory operations */
+emit_global_addr(tipo, var)
   int tipo;
   char *var;
 {
@@ -2330,18 +2330,18 @@ outpos(tipo, var)
     ((var[offset + 1] & 255) << 8) +
     ((var[offset + 2] & 255) << 16) +
     ((var[offset + 3] & 255) << 24);
-  enlace();
-  crea_nodo(N_LDNLP, ultimo_nodo, 0, j);
+  load_static_base();
+  make_node(N_LDNLP, last_node, 0, j);
 }
 
-/* Multiplica por palabra el registro primario */
-doublereg()
+/* Multiply the primary register by word size */
+scale_by_word()
 {
-  if(oper[ultimo_nodo] == N_CONST)
-    esp[ultimo_nodo] = esp[ultimo_nodo] * 4;
+  if(oper[last_node] == N_CONST)
+    stk[last_node] = stk[last_node] * 4;
   else {
-    crea_nodo(N_CONST, 0, 0, 4);
-    crea_nodo(N_MUL, ultimo_nodo - 1, ultimo_nodo, 0);
+    make_node(N_CONST, 0, 0, 4);
+    make_node(N_MUL, last_node - 1, last_node, 0);
   }
 }
 
@@ -2349,7 +2349,7 @@ test(label)
   int label;
 {
   needbrack("(");
-  usaexpr = SI;
+  use_expr = YES;
   expression();
   needbrack(")");
   testjump(label);
@@ -2359,11 +2359,11 @@ constant(val)
   int val[];
 {
   if (number(val))
-    crea_nodo(N_CONST, 0, 0, val[0]);
+    make_node(N_CONST, 0, 0, val[0]);
   else if (pstr(val))
-    crea_nodo(N_CONST, 0, 0, val[0]);
+    make_node(N_CONST, 0, 0, val[0]);
   else if (qstr(val))
-    crea_nodo(N_LIT, 0, 0, val[0]);
+    make_node(N_LIT, 0, 0, val[0]);
   else
     return 0;
   return 1;
@@ -2395,10 +2395,10 @@ number(val)
     return 0;
   if(ch() == '0') {
     while(ch() == '0') gch();
-    if(raise(ch()) == 'X') {
+    if(to_upper(ch()) == 'X') {
       gch();
       while(isxdigit(ch())) {
-        c = raise(gch()) - '0';
+        c = to_upper(gch()) - '0';
         if(c > 9) c = c - 7;
         k = (k << 4) | c;
       }
@@ -2443,7 +2443,7 @@ qstr(val)
     if (ch() == 0)
       break;
     if (litptr >= litmax) {
-      error("Espacio de almacenamiento de cadenas agotado");
+      error("String literal storage exhausted");
     while (match(quote) == 0)
       if (gch() == 0)
         break;
@@ -2493,70 +2493,70 @@ litchar()
     return oct;
 }
 
-crea_nodo(op, izq, der, val)
-  int op, izq, der, val;
+make_node(op, left, right, val)
+  int op, left, right, val;
 {
-  if(op == N_CSUMA) {
-    if(oper[izq] == N_CSUMA) {
-      val = val + esp[izq];
-      izq = nodo_izq[izq];
+  if(op == N_CADD) {
+    if(oper[left] == N_CADD) {
+      val = val + stk[left];
+      left = node_left[left];
     }
   }
   else if(op == N_LDNLP) {
-    if(oper[izq] == N_LDNLP) {
-      val = val + esp[izq];
-      izq = nodo_izq[izq];
+    if(oper[left] == N_LDNLP) {
+      val = val + stk[left];
+      left = node_left[left];
     }
-    else if(oper[izq] == N_LDLP) {
-      val = val + esp[izq];
-      izq = 0;
+    else if(oper[left] == N_LDLP) {
+      val = val + stk[left];
+      left = 0;
       op = N_LDLP;
     }
   }
-  ++ultimo_nodo;
-  if(ultimo_nodo == TAM_ARBOL) {
-    error("Expresion muy compleja");
+  ++last_node;
+  if(last_node == TREE_SIZE) {
+    error("Expression too complex");
     abort();
   }
-  nodo_izq[ultimo_nodo] = izq;
-  nodo_der[ultimo_nodo] = der;
-  oper[ultimo_nodo] = op;
-  esp[ultimo_nodo] = val;
-  regs[ultimo_nodo] = 0;
+  node_left[last_node] = left;
+  node_right[last_node] = right;
+  oper[last_node] = op;
+  stk[last_node] = val;
+  regs[last_node] = 0;
 }
 
-etiqueta(nodo)
-  int nodo;
+annotate(node)
+  int node;
 {
   int min, max;
 
-  if (nodo_izq[nodo])
-    etiqueta(nodo_izq[nodo]);
-  if (nodo_der[nodo])
-    etiqueta(nodo_der[nodo]);
-  if ((oper[nodo] == N_FUNCI) | (oper[nodo] == N_PAR))
-    if (esp[nodo])
-      etiqueta(esp[nodo]);
-  if ((oper[nodo] == N_FUNCI) | (oper[nodo] == N_FUNC) |
-      (oper[nodo] == N_GBYTE) | (oper[nodo] == N_GPAL))
-    regs[nodo] = 3;
-  else if ((oper[nodo] == N_INC) | (oper[nodo] == N_PINC)) {
-    regs[nodo] = 3;
-    if (regs[nodo_izq[nodo]] == 1)
-      if (oper[nodo_izq[nodo]] == N_LDLP)
-	regs[nodo] = 2;
-  } else if (nodo_izq[nodo] == 0)
-    regs[nodo] = 1;
-  else if (nodo_der[nodo] == 0)
-    regs[nodo] = regs[nodo_izq[nodo]];
+  if (node_left[node])
+    annotate(node_left[node]);
+  if (node_right[node])
+    annotate(node_right[node]);
+  if ((oper[node] == N_FUNCI) | (oper[node] == N_PAR))
+    if (stk[node])
+      annotate(stk[node]);
+  if ((oper[node] == N_FUNCI) | (oper[node] == N_FUNC) |
+      (oper[node] == N_SBYTE) | (oper[node] == N_SWORD))
+    regs[node] = 3;
+  else if ((oper[node] == N_INC) | (oper[node] == N_PINC)) {
+    regs[node] = 3;
+    if (regs[node_left[node]] == 1)
+      if (oper[node_left[node]] == N_LDLP)
+	regs[node] = 2;
+  } else if (node_left[node] == 0)
+    regs[node] = 1;
+  else if (node_right[node] == 0)
+    regs[node] = regs[node_left[node]];
   else {
-    min = regs[nodo_izq[nodo]];
-    max = regs[nodo_der[nodo]];
+    min = regs[node_left[node]];
+    max = regs[node_right[node]];
     if (min > max)
       max = min;
     else if (min == max)
       max = max + 1;
-    regs[nodo] = max;
+    regs[node] = max;
   }
 }
 
@@ -2569,10 +2569,10 @@ gen_oper(oper, rev)
     ol("xor");
   else if (oper == N_AND)
     ol("and");
-  else if (oper == N_IGUAL) {
+  else if (oper == N_EQ) {
     ol("diff");
     ol("eqc 0");
-  } else if (oper == N_SUMA)
+  } else if (oper == N_ADD)
     ol("bsub");
   else if (oper == N_MUL)
     ol("prod");
@@ -2585,9 +2585,9 @@ gen_oper(oper, rev)
     ol("eqc 0");
   else if (oper == N_CBYTE)
     ol("lb");
-  else if (oper == N_CPAL)
+  else if (oper == N_CWORD)
     ol("ldnl 0");
-  else if (oper == N_SMAYOR) {
+  else if (oper == N_SGT) {
     if (rev == 0)
       ol("rev");
     ol("mint");
@@ -2599,13 +2599,13 @@ gen_oper(oper, rev)
   } else {
     if (rev)
       ol("rev");
-    if (oper == N_MAYOR)
+    if (oper == N_GT)
       ol("gt");
     else if (oper == N_CD)
       ol("shr");
     else if (oper == N_CI)
       ol("shl");
-    else if (oper == N_RESTA)
+    else if (oper == N_SUB)
       ol("diff");
     else if (oper == N_DIV)
       ol("div");
@@ -2616,72 +2616,72 @@ gen_oper(oper, rev)
   }
 }
 
-gen_codigo(nodo)
-  int nodo;
+gen_code(node)
+  int node;
 {
-  int temp, conteo, pals, par, rev, op, req, reqres;
+  int temp, count, words, param, rev, op, req, need_result;
   int regb, regc;
 
-  if((nodo != raiz_arbol) | (usaexpr == SI)) reqres = SI;
-  else reqres = NO;
-  op = oper[nodo];
+  if((node != tree_root) | (use_expr == YES)) need_result = YES;
+  else need_result = NO;
+  op = oper[node];
   if ((op == N_FUNC) | (op == N_FUNCI)) {
-    pals = conteo = 0;
+    words = count = 0;
     regb = regc = 0;
-    temp = nodo_izq[nodo];
+    temp = node_left[node];
     while (temp) {
-      if(regb == 0) regb = nodo_izq[temp];
-      else if(regc == 0) regc = nodo_izq[temp];
+      if(regb == 0) regb = node_left[temp];
+      else if(regc == 0) regc = node_left[temp];
       else {
-        ++pals;
-        ++conteo;
+        ++words;
+        ++count;
       }
-      temp = esp[temp];
+      temp = stk[temp];
     }
-    Zsp = modstk(Zsp - pals);
-    if(conteo) {
-      temp = esp[esp[nodo_izq[nodo]]];
-      par = 0;
-      while (conteo--) {
-        gen_codigo(nodo_izq[temp]);
-        ins("stl ", par++);
-        temp = esp[temp];
+    Zsp = modstk(Zsp - words);
+    if(count) {
+      temp = stk[stk[node_left[node]]];
+      param = 0;
+      while (count--) {
+        gen_code(node_left[temp]);
+        ins("stl ", param++);
+        temp = stk[temp];
       }
     }
-    if (oper[nodo] == N_FUNC) {
+    if (oper[node] == N_FUNC) {
       if(regc == 0) {
-        if(regb) gen_codigo(regb);
+        if(regb) gen_code(regb);
         }
       else {
         if ((regs[regc] >= regs[regb]) &
             (regs[regb] < 3)) {
-          gen_codigo(regc);
-          gen_codigo(regb);
+          gen_code(regc);
+          gen_code(regb);
         } else if ((regs[regb] > regs[regc]) &
                    (regs[regc] < 3)) {
-          gen_codigo(regb);
-          gen_codigo(regc);
+          gen_code(regb);
+          gen_code(regc);
           ol("rev");
         } else {
-          gen_codigo(regb);
+          gen_code(regb);
           zpush();
-          gen_codigo(regc);
+          gen_code(regc);
           zpop();
         }
       }
       ins("ldl ", 1 - Zsp);
-      zcall(esp[nodo]);
+      zcall(stk[node]);
     } else {
       Zsp = modstk(Zsp - 4);
       if(regb) {
-        gen_codigo(regb);
+        gen_code(regb);
         ol("stl 2");
         }
       if(regc) {
-        gen_codigo(regc);
+        gen_code(regc);
         ol("stl 3");
         }
-      gen_codigo(esp[nodo]);
+      gen_code(stk[node]);
       ins("ldl ", 1 - Zsp);
       ol("ldc 3");
       ol("ldpi");
@@ -2690,44 +2690,44 @@ gen_codigo(nodo)
       ol("gcall");
       Zsp = Zsp + 4;
     }
-    Zsp = modstk(Zsp + pals);
+    Zsp = modstk(Zsp + words);
     return;
   }
-  if ((op == N_GBYTE) | (op == N_GPAL)) {
-    if(reqres) req = 2;
+  if ((op == N_SBYTE) | (op == N_SWORD)) {
+    if(need_result) req = 2;
     else req = 3;
-    if (regs[nodo_der[nodo]] < req) {
-      gen_codigo(nodo_izq[nodo]);
-      if(reqres) ol("dup");
-      if ((op == N_GPAL) & (oper[nodo_der[nodo]] == N_LDLP))
-	oper[nodo_der[nodo]] = N_STL;
-      else if ((op == N_GPAL) & (oper[nodo_der[nodo]] == N_LDNLP))
-	oper[nodo_der[nodo]] = N_STNL;
+    if (regs[node_right[node]] < req) {
+      gen_code(node_left[node]);
+      if(need_result) ol("dup");
+      if ((op == N_SWORD) & (oper[node_right[node]] == N_LDLP))
+	oper[node_right[node]] = N_STL;
+      else if ((op == N_SWORD) & (oper[node_right[node]] == N_LDNLP))
+	oper[node_right[node]] = N_STNL;
       else {
-	gen_codigo(nodo_der[nodo]);
-	if(op == N_GPAL)
+	gen_code(node_right[node]);
+	if(op == N_SWORD)
           ol("stnl 0");
         else
           ol("sb");
         return;
       }
-      gen_codigo(nodo_der[nodo]);
+      gen_code(node_right[node]);
       return;
     }
-    gen_codigo(nodo_der[nodo]);
-    if(reqres) req = SI;
-    else if (regs[nodo_izq[nodo]] < 3) req = NO;
-    else req = SI;
+    gen_code(node_right[node]);
+    if(need_result) req = YES;
+    else if (regs[node_left[node]] < 3) req = NO;
+    else req = YES;
     if(req) {
       zpush();
-      gen_codigo(nodo_izq[nodo]);
+      gen_code(node_left[node]);
       ol("dup");
       zpop();
     } else {
-      gen_codigo(nodo_izq[nodo]);
+      gen_code(node_left[node]);
       ol("rev");
     }
-    if (op == N_GPAL)
+    if (op == N_SWORD)
       ol("stnl 0");
     else
       ol("sb");
@@ -2735,7 +2735,7 @@ gen_codigo(nodo)
   }
   if (op == N_APFUNC) {
     ot("ldc ");
-    outname(esp[nodo]);
+    outname(stk[node]);
     outasm("-");
     printlabel(temp = getlabel());
     nl();
@@ -2746,7 +2746,7 @@ gen_codigo(nodo)
     return;
   }
   if (op == N_CONST) {
-    ins("ldc ", esp[nodo]);
+    ins("ldc ", stk[node]);
     return;
   }
   if (op == N_LIT) {
@@ -2755,7 +2755,7 @@ gen_codigo(nodo)
     outasm("-");
     printlabel(temp = getlabel());
     outasm("+");
-    outdec(esp[nodo]);
+    outdec(stk[node]);
     nl();
     ol("ldpi");
     printlabel(temp);
@@ -2764,37 +2764,37 @@ gen_codigo(nodo)
     return;
   }
   if (op == N_LDLP) {
-    ins("ldlp ", esp[nodo] - Zsp);
+    ins("ldlp ", stk[node] - Zsp);
     return;
   }
   if (op == N_LDL) {
-    ins("ldl ", esp[nodo] - Zsp);
+    ins("ldl ", stk[node] - Zsp);
     return;
   }
   if (op == N_STL) {
-    ins("stl ", esp[nodo] - Zsp);
+    ins("stl ", stk[node] - Zsp);
     return;
   }
   if ((op == N_INC) | (op == N_PINC)) {
-    if (regs[nodo] == 2) {
-      oper[nodo_izq[nodo]] = N_LDL;
-      gen_codigo(nodo_izq[nodo]);
+    if (regs[node] == 2) {
+      oper[node_left[node]] = N_LDL;
+      gen_code(node_left[node]);
     } else {
-      gen_codigo(nodo_izq[nodo]);
+      gen_code(node_left[node]);
       ol("dup");
       ol("ldnl 0");
     }
     if (op == N_PINC)
-      if(reqres)
+      if(need_result)
         ol("dup");
-    ins("adc ", esp[nodo]);
+    ins("adc ", stk[node]);
     if (op == N_INC)
-      if(reqres)
+      if(need_result)
         ol("dup");
-    if (regs[nodo] == 2) {
-      oper[nodo_izq[nodo]] = N_STL;
-      gen_codigo(nodo_izq[nodo]);
-    } else if (reqres) {
+    if (regs[node] == 2) {
+      oper[node_left[node]] = N_STL;
+      gen_code(node_left[node]);
+    } else if (need_result) {
       ol("pop");
       ol("pop");
       ol("stnl 0");
@@ -2804,70 +2804,70 @@ gen_codigo(nodo)
     }
     return;
   }
-  if (op == N_CPAL) {
-    if (oper[nodo_izq[nodo]] == N_LDLP) {
-      oper[nodo_izq[nodo]] = N_LDL;
-      op = N_NULO;
-    } else if (oper[nodo_izq[nodo]] == N_LDNLP) {
-      oper[nodo_izq[nodo]] = N_LDNL;
-      op = N_NULO;
+  if (op == N_CWORD) {
+    if (oper[node_left[node]] == N_LDLP) {
+      oper[node_left[node]] = N_LDL;
+      op = N_NULL;
+    } else if (oper[node_left[node]] == N_LDNLP) {
+      oper[node_left[node]] = N_LDNL;
+      op = N_NULL;
     }
   }
   rev = 0;
-  if (nodo_der[nodo]) {
-    if ((regs[nodo_izq[nodo]] >= regs[nodo_der[nodo]]) &
-	(regs[nodo_der[nodo]] < 3)) {
-      gen_codigo(nodo_izq[nodo]);
-      gen_codigo(nodo_der[nodo]);
-    } else if ((regs[nodo_der[nodo]] > regs[nodo_izq[nodo]]) &
-	       (regs[nodo_izq[nodo]] < 3)) {
-      gen_codigo(nodo_der[nodo]);
-      gen_codigo(nodo_izq[nodo]);
+  if (node_right[node]) {
+    if ((regs[node_left[node]] >= regs[node_right[node]]) &
+	(regs[node_right[node]] < 3)) {
+      gen_code(node_left[node]);
+      gen_code(node_right[node]);
+    } else if ((regs[node_right[node]] > regs[node_left[node]]) &
+	       (regs[node_left[node]] < 3)) {
+      gen_code(node_right[node]);
+      gen_code(node_left[node]);
       rev = 1;
     } else {
-      gen_codigo(nodo_der[nodo]);
+      gen_code(node_right[node]);
       zpush();
-      gen_codigo(nodo_izq[nodo]);
+      gen_code(node_left[node]);
       zpop();
     }
   } else
-    gen_codigo(nodo_izq[nodo]);
-  if (op == N_CIGUAL) {
-    ins("eqc ", esp[nodo]);
+    gen_code(node_left[node]);
+  if (op == N_CEQ) {
+    ins("eqc ", stk[node]);
     return;
   }
-  if (op == N_CSUMA) {
-    if(esp[nodo]) ins("adc ", esp[nodo]);
+  if (op == N_CADD) {
+    if(stk[node]) ins("adc ", stk[node]);
     return;
   }
   if (op == N_LDNLP) {
-    if(esp[nodo]) ins("ldnlp ", esp[nodo]);
+    if(stk[node]) ins("ldnlp ", stk[node]);
     return;
   }
   if (op == N_LDNL) {
-    ins("ldnl ", esp[nodo]);
+    ins("ldnl ", stk[node]);
     return;
   }
   if (op == N_STNL) {
-    ins("stnl ", esp[nodo]);
+    ins("stnl ", stk[node]);
     return;
   }
   gen_oper(op, rev);
 }
 
-ins(codigo, valor) char *codigo; int valor; {
-  outasm(codigo);
-  outdec(valor);
+ins(code, value) char *code; int value; {
+  outasm(code);
+  outdec(value);
   nl();
 }
 
-/* Comienza una linea de comentarios para el ensamblador */
+/* Begin a comment line for the assembler */
 comment()
 {
   outbyte(';');
 }
 
-/* Pone el prologo para el codigo generado. */
+/* Emit the prologue for the generated code. */
 header()
 {
   comment();
@@ -2881,27 +2881,27 @@ header()
   nl();
   comment();
   nl();
-  ol("COMIENZO:");
-  ol("j INICIO");
+  ol("START:");
+  ol("j ENTRY");
 }
 
-/* Pone el epilogo para el codigo generado. */
+/* Emit the epilogue for the generated code. */
 trailer()
 {
   nl();
   comment();
-  outstr(" Fin de compilacion");
+  outstr(" End of compilation");
   nl();
-  outasm("INICIO");
+  outasm("ENTRY");
   col();
   nl();
-  ins("ajw ", -posglobal);
-  if (posglobal > 2) {
+  ins("ajw ", -global_pos);
+  if (global_pos > 2) {
     ol("ldlp 2");
     ol("stl 0");
-    ins("ldc ", posglobal - 2);
+    ins("ldc ", global_pos - 2);
     ol("stl 1");
-    outasm("INICIO2");
+    outasm("ENTRY2");
     col();
     nl();
     ol("ldc 0");
@@ -2915,17 +2915,17 @@ trailer()
     ol("stl 1");
     ol("ldl 1");
     ol("eqc 0");
-    ol("cj INICIO2");
+    ol("cj ENTRY2");
   }
   ol("ldlp 0");
   ol("call qmain");
-  ins("ajw ", posglobal);
+  ins("ajw ", global_pos);
   ol("ret");
 }
 
 /*
-** Imprime un nombre que no entre en conflicto con las
-** palabras reservadas del ensamblador.
+** Print a name that does not conflict with
+** reserved words of the assembler.
 */
 outname(sname)
   char *sname;
@@ -2934,7 +2934,7 @@ outname(sname)
   outasm(sname);
 }
 
-/* Pone el registro A en la pila */
+/* Push register A onto the stack */
 zpush()
 {
   ol("ajw -1");
@@ -2942,7 +2942,7 @@ zpush()
   --Zsp;
 }
 
-/* Pone el tope de la pila en el reg. A */
+/* Pop the top of stack into register A */
 zpop()
 {
   ol("ldl 0");
@@ -2965,27 +2965,27 @@ zret()
   ol("ret");
 }
 
-/* Salta a la etiqueta interna especificada */
+/* Jump to the specified internal label */
 jump(label)
   int label;
 {
   ins("j c", label);
 }
 
-/* Prueba el registro primario y salta si es falso */
+/* Test the primary register and jump if false */
 testjump(label)
   int label;
 {
   ins("cj c", label);
 }
 
-/* Retorna la siguiente etiqueta interna disponible */
+/* Return the next available internal label */
 getlabel()
 {
   return (++nxtlab);
 }
 
-/* Imprime el n£mero especificado c¢mo una etiqueta */
+/* Print the specified number as a label */
 printlabel(label)
   int label;
 {
@@ -2998,13 +2998,13 @@ col()
   outbyte(58);
 }
 
-/* Seudo-operacion para definir un byte */
+/* Pseudo-operation to define a byte */
 defbyte()
 {
   ot("db ");
 }
 
-/* Modifica la posici¢n de la pila */
+/* Modify the stack position */
 modstk(newsp)
   int newsp;
 {
@@ -3015,4 +3015,4 @@ modstk(newsp)
   return newsp;
 }
 
-/* Fin del Compilador de Mini-C */
+/* End of the Mini-C Compiler */

@@ -78,6 +78,38 @@ Later!
 When there is some, it'll be in the 'docs' directory, when this exists!
 
 
+# Translation details
+Here's a summary of everything that was translated across the 3,018-line tc2.c file:
+
+## String literals (user-facing messages)
+
+Banner/version strings, all prompts ("Output file? ", "Input file? ", "Pause after each error? (Y/N) ", etc.)
+
+All error messages ("Missing semicolon", "Expression too complex", "Global table full", etc.)
+
+The "Compilation aborted." / "End of compilation" runtime strings
+
+The assembler labels emitted to output (COMIENZO→START, INICIO→ENTRY, INICIO2→ENTRY2)
+
+## Identifiers and function names
+
+SI→YES, hello()→banner(), see()→options()
+
+Tree arrays: nodo_izq[]→node_left[], nodo_der[]→node_right[], esp[]→stk[]
+
+Tree globals: ultimo_nodo→last_node, raiz_arbol→tree_root, TAM_ARBOL→TREE_SIZE
+
+Functions: crea_nodo()→make_node(), etiqueta()→annotate(), gen_codigo()→gen_code(), enlace()→load_static_base(), outpos()→emit_global_addr(), doublereg()→scale_by_word(), raise()→to_upper(), predel()→pre_space(), prequote()→pre_quote(), preapos()→pre_apos(), precomm()→pre_comment()
+
+Node op macros: N_IGUAL→N_EQ, N_CIGUAL→N_CEQ, N_MAYOR→N_GT, N_CSUMA→N_CADD, N_NULO→N_NULL, N_SMAYOR→N_SGT, N_SUMA→N_ADD, N_RESTA→N_SUB, N_CPAL→N_CWORD, N_GBYTE→N_SBYTE, N_GPAL→N_SWORD
+
+Globals: posglobal→global_pos, usaexpr→use_expr
+
+Local variables throughout: izq→left, der→right, conteo→count, pals→words, primero→first, anterior→prev, pila→stack, reqres→need_result, nodo→node, codigo→code, valor→value
+
+## All comments
+Every block and inline comment translated, including the full function-header doc comments.
+
 # Acknowledgements
 Óscar Toledo Gutierrez for writing his Transputer project, the original code, and
 his kind permission for me to undertake this translation.

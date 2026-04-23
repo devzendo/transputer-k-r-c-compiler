@@ -116,7 +116,7 @@ int wq[wqtabsz];        /* Loop queue */
 int *wqptr;             /* Pointer to the next entry */
 
 char litq[litabsz];     /* String literal storage */
-int litptr;             /* Pointer to the next entry */
+int litidx;             /* Index to the next entry in litq */
 
 char macq[macqsize];    /* Macro buffer */
 int macptr;             /* Index into the buffer */
@@ -252,18 +252,18 @@ dumplits()
 {
   int j, k;
 
-  if (litptr == 0)
+  if (litidx == 0)
     return;             /* Nothing to dump, return... */
   printlabel(litlab);   /* Print the label */
   col();
   nl();
   k = 0;                /* Start an index... */
-  while (k < litptr) {  /* to flush the storage */
+  while (k < litidx) {  /* to flush the storage */
     defbyte();          /* Define byte */
     j = 5;              /* Bytes per line */
     while (j--) {
       outdec(litq[k++] & 255);
-      if ((j == 0) | (k >= litptr)) {
+      if ((j == 0) | (k >= litidx)) {
         nl();           /* Another line */
         break;
       }
@@ -644,7 +644,7 @@ newfunc()
   Zsp = 0;              /* Initialize the stack pointer */
 
   litlab = getlabel();  /* Label for the literal buffer */
-  litptr = 0;           /* Clear the literal buffer */
+  litidx = 0;           /* Clear the literal buffer */
 
   /* Process a statement; if it is a return */
   /* then do not clean the stack */
@@ -2440,21 +2440,21 @@ qstr(val)
 
   if (match(quote) == 0)
     return 0;
-  val[0] = litptr;
+  val[0] = litidx;
   while (ch() != '"') {
     if (ch() == 0)
       break;
-    if (litptr >= litmax) {
+    if (litidx >= litmax) {
       error("String literal storage exhausted");
     while (match(quote) == 0)
       if (gch() == 0)
         break;
       return 1;
     }
-    litq[litptr++] = litchar();
+    litq[litidx++] = litchar();
   }
   gch();
-  litq[litptr++] = 0;
+  litq[litidx++] = 0;
   return 1;
 }
 

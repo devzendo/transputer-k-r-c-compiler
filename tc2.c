@@ -6,9 +6,11 @@
 **
 ** Original compiler by Ron Cain.
 **
+** English translation, modernisation by Matt Gumbley & Claude.
+**
 ** 12-jun-1995
 */
- 
+
 #define BANNER  "*** C Compiler for G-10 ***"
 #define AUTHOR  "   by Oscar Toledo Gutierrez."
 #define VERSION "          Version 1.00"
@@ -88,7 +90,7 @@
 /* Define macro storage */
 
 #define macqsize 4096
-#define macmax  macqsize-1
+#define macmax   macqsize-1
 
 /* Define statement types */
 
@@ -160,8 +162,8 @@ int use_expr;            /* Whether the expression result is used */
 */
 main()
 {
-  banner();              /* Banner */
-  options();                /* Process options */
+  banner();             /* Banner */
+  options();            /* Process options */
   openin();             /* First file to process */
   while (input != 0) {  /* Process all requested files */
     glbptr = startglb;  /* Clear the global table */
@@ -471,8 +473,7 @@ declglb(typ)            /* typ is cchar or cint */
 /*
 ** Process local variable declarations.
 */
-declloc()
-{
+declloc() {
   int k, j, stack, typ;
   char sname[namesize];
 
@@ -486,30 +487,30 @@ declloc()
       break;
     while (1) {
       if (endst())
-	break;
+        break;
       if (match("*"))
-	j = pointer;
+        j = pointer;
       else
-	j = variable;
+        j = variable;
       if (symname(sname) == 0)
-	illname();
+        illname();
       if (findloc(sname))
-	multidef(sname);
+        multidef(sname);
       if (match("[")) {
-	k = needsub();
-	if (k) {
-	  j = array;
-	  if (typ == cint)
-	    k = k * 4;
-	} else {
-	  j = pointer;
-	  k = 4;
-	}
+        k = needsub();
+        if (k) {
+          j = array;
+          if (typ == cint)
+            k = k * 4;
+        } else {
+          j = pointer;
+          k = 4;
+        }
       } else if ((typ == cchar)
-		 & (j != pointer))
-	k = 1;
+                 & (j != pointer))
+        k = 1;
       else
-	k = 4;
+        k = 4;
       /* Adjust the stack */
       k = (k + 3) / 4;
       stack = stack - k;
@@ -601,10 +602,10 @@ newfunc()
 
     if (symname(n)) {
       if (findloc(n))
-	multidef(n);
+        multidef(n);
       else {
-	addloc(n, 0, 0, argstk + 2);
-	++argstk;
+        addloc(n, 0, 0, argstk + 2);
+        ++argstk;
       }
     } else {
       error("Illegal argument name");
@@ -616,7 +617,7 @@ newfunc()
 
     if (streq(line + lptr, ")") == 0) {
       if (match(",") == 0)
-	error("Comma required");
+        error("Comma required");
     }
     if (endst())
       break;
@@ -647,7 +648,7 @@ newfunc()
   /* Process a statement; if it is a return */
   /* then do not clean the stack */
 
-  if(statement() != streturn) {
+  if (statement() != streturn) {
     modstk(0);
     zret();
   }
@@ -674,10 +675,10 @@ getarg(t, top)                  /* Type = cchar or cint */
       j = variable;
     if (symname(n)) {
       if (match("[")) {         /* Ignore what is between [] */
-	while (in_byte() != ']')
-	  if (endst())
-	    break;
-	j = pointer;
+        while (in_byte() != ']')
+	        if (endst())
+	          break;
+	      j = pointer;
       }
       if (argptr = findloc(n)) {
 
@@ -687,7 +688,7 @@ getarg(t, top)                  /* Type = cchar or cint */
 	argptr[type] = t;
 
       } else
-	error("Argument name required");
+        error("Argument name required");
     } else
       illname();
 
@@ -765,7 +766,7 @@ compound()
   int local, stack;
 
   local = locptr;               /* Local variables */
-  stack = Zsp;                   /* Current stack */
+  stack = Zsp;                  /* Current stack */
   ++ncmp;                       /* A new level */
   declloc();                    /* Process local declarations */
   while (match("}") == 0)
@@ -886,7 +887,7 @@ doasm()
 {
   cmode = 0;                    /* Mark assembler mode */
   while (1) {
-    in_line();                   /* Get and print lines */
+    in_line();                  /* Get and print lines */
     if (match("#endasm"))
       break;                    /* until... */
     if (eof)
@@ -1386,7 +1387,7 @@ outstr(ptr)
 }
 
 /*
-** Escribe texto destinado al ensamblador
+** Writes text intended for the assembler
 */
 outasm(ptr)
   char *ptr;
@@ -1578,7 +1579,7 @@ to_upper(c)
 }
 
 /*
-** Evaluador de Expresiones.
+** Expression evaluator.
 **
 ** by Oscar Toledo Gutierrez.
 **
@@ -2950,7 +2951,7 @@ zpop()
   ++Zsp;
 }
 
-/* Llama a la funci�n especificada */
+/* "Calls the specified function */
 zcall(sname)
   char *sname;
 {
@@ -2959,7 +2960,7 @@ zcall(sname)
   nl();
 }
 
-/* Retorna de una funci�n */
+/* Returns from a function */
 zret()
 {
   ol("ret");

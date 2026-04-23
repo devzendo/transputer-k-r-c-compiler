@@ -5,6 +5,8 @@
  ** https://nanochess.org/
  **
  ** Creation date: Feb/01/2025. Ported from old code from Jun/14/1995.
+ **
+ ** Translated to English by Matt Gumbley & Claude.
  */
 
 #include <stdio.h>

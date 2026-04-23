@@ -286,7 +286,7 @@ void assemble(void)
 }
 
 /*
- ** Cálcula el val de dispersión para un label_name
+ ** Calculate the hash value for a name
  */
 int hash_name(char *label_name)
 {
@@ -512,7 +512,7 @@ void check_end(void)
 }
 
 /*
- ** Report an error de caracteres extras en la línea
+ ** Report an error of extra characters in the line
  */
 void error_extra_chars(void)
 {
@@ -781,7 +781,7 @@ void emit_extended(int op)
 }
 
 /*
- ** Definición de bytes
+ ** Define bytes
  */
 void def_byte(void)
 {
@@ -836,7 +836,7 @@ void def_byte(void)
 }
 
 /*
- ** Definición de palabras de 32 bits
+ ** Definition of 32-bit words
  */
 void def_word32(void)
 {
@@ -915,7 +915,7 @@ void def_equ(void)
 }
 
 /*
- ** Comparación con instrucción
+ ** Comparison with instruction mnemonic."
  */
 int match_str(char *op, char *token)
 {

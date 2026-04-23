@@ -210,7 +210,7 @@ abort()
   toconsole();
   pl("Compilation aborted.");
   nl();
-  exit();
+  exit(1);
 }
 
 

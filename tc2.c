@@ -123,7 +123,7 @@ int macidx;             /* Index into the buffer */
 
 char line[linesize];    /* Parse buffer */
 char mline[linesize];   /* Pre-preprocessed buffer */
-int lptr, mptr;         /* Respective pointers */
+int lidx, midx;         /* Respective indices */
 
 /* Miscellaneous storage */
 char *                  /* FILE * really, but this compiler only understands char * */
@@ -379,13 +379,13 @@ doinclude()
 
   toconsole();
   outstr("#include ");
-  outstr(line + lptr);
+  outstr(line + lidx);
   nl();
   tofile();
 
   if (input2)
     error("Cannot nest include files");
-  else if ((input2 = fopen(line + lptr, "r")) == NULL) {
+  else if ((input2 = fopen(line + lidx, "r")) == NULL) {
     input2 = 0;
     error("Could not read file");
   } else {
@@ -616,7 +616,7 @@ newfunc()
 
     /* If not a closing parenthesis, must be a comma */
 
-    if (streq(line + lptr, ")") == 0) {
+    if (streq(line + lidx, ")") == 0) {
       if (match(",") == 0)
         error("Comma required");
     }
@@ -917,7 +917,7 @@ junk()
 endst()
 {
   blanks();
-  return ((streq(line + lptr, ";") | (ch() == 0)));
+  return ((streq(line + lidx, ";") | (ch() == 0)));
 }
 
 illname()
@@ -1117,7 +1117,7 @@ readwhile()
 
 ch()
 {
-  return (line[lptr] & 255);
+  return (line[lidx] & 255);
 }
 
 nch()
@@ -1125,7 +1125,7 @@ nch()
   if (ch() == 0)
     return 0;
   else
-    return (line[lptr + 1] & 255);
+    return (line[lidx + 1] & 255);
 }
 
 gch()
@@ -1133,13 +1133,13 @@ gch()
   if (ch() == 0)
     return 0;
   else
-    return (line[lptr++] & 255);
+    return (line[lidx++] & 255);
 }
 
 kill()
 {
-  lptr = 0;
-  line[lptr] = 0;
+  lidx = 0;
+  line[lidx] = 0;
 }
 
 in_byte()
@@ -1168,11 +1168,11 @@ in_line()
     while ((k = fgetc(unit)) > 0) {
       if (k == 13)
 	continue;
-      if ((k == eol) | (lptr >= linemax))
+      if ((k == eol) | (lidx >= linemax))
 	break;
-      line[lptr++] = k;
+      line[lidx++] = k;
     }
-    line[lptr] = 0;     /* Append a null character */
+    line[lidx] = 0;     /* Append a null character */
     lineno++;           /* One more line has been read */
     if (k <= 0) {
       fclose(unit);
@@ -1181,13 +1181,13 @@ in_line()
       else
 	input = 0;
     }
-    if (lptr) {
+    if (lidx) {
       if (ctext & cmode) {
 	comment();
 	outstr(line);
 	nl();
       }
-      lptr = 0;
+      lidx = 0;
       return;
     }
   }
@@ -1200,7 +1200,7 @@ preprocess()
 
   if (cmode == 0)
     return;
-  mptr = lptr = 0;
+  midx = lidx = 0;
   while (ch()) {
     if ((ch() == ' ') | (ch() == 9))
       pre_space();
@@ -1230,19 +1230,19 @@ preprocess()
       keepch(gch());
   }
   keepch(0);
-  if (mptr >= mpmax)
+  if (midx >= mpmax)
     error("Line too long");
-  lptr = mptr = 0;
-  while (line[lptr++] = mline[mptr++]);
-  lptr = 0;
+  lidx = midx = 0;
+  while (line[lidx++] = mline[midx++]);
+  lidx = 0;
 }
 
 keepch(c)
   char c;
 {
-  mline[mptr] = c;
-  if (mptr < mpmax)
-    mptr++;
+  mline[midx] = c;
+  if (midx < mpmax)
+    midx++;
   return c;
 }
 
@@ -1258,7 +1258,7 @@ pre_quote()
 {
   keepch(ch());
   gch();
-  while ((ch() != '"') | ((line[lptr - 1] == 92) & (line[lptr - 2] != 92))) {
+  while ((ch() != '"') | ((line[lidx - 1] == 92) & (line[lidx - 2] != 92))) {
     if (ch() == 0) {
       error("Missing closing quote");
       break;
@@ -1273,7 +1273,7 @@ pre_apos()
 {
   keepch(39);
   gch();
-  while ((ch() != 39) | ((line[lptr - 1] == 92) & (line[lptr - 2] != 92))) {
+  while ((ch() != 39) | ((line[lidx - 1] == 92) & (line[lidx - 2] != 92))) {
     if (ch() == 0) {
       error("Missing apostrophe");
       break;
@@ -1286,17 +1286,17 @@ pre_apos()
 
 pre_comment()
 {
-  lptr = lptr + 2;
+  lidx = lidx + 2;
   while (((ch() == '*') &
 	  (nch() == '/')) == 0) {
     if (ch() == 0)
       in_line();
     else
-      ++lptr;
+      ++lidx;
     if (eof)
       break;
   }
-  lptr = lptr + 2;
+  lidx = lidx + 2;
 }
 
 addmac()
@@ -1424,7 +1424,7 @@ error(ptr)
   nl();
 
   k = 0;                /* Find the error position */
-  while (k < lptr) {
+  while (k < lidx) {
     if (line[k++] == 9)
       outbyte(9);
     else
@@ -1502,8 +1502,8 @@ match(lit)
   int k;
 
   blanks();
-  if (k = streq(line + lptr, lit)) {
-    lptr = lptr + k;
+  if (k = streq(line + lidx, lit)) {
+    lidx = lidx + k;
     return 1;
   }
   return 0;
@@ -1516,8 +1516,8 @@ amatch(lit, len)
   int k;
 
   blanks();
-  if (k = astreq(line + lptr, lit, len)) {
-    lptr = lptr + k;
+  if (k = astreq(line + lidx, lit, len)) {
+    lidx = lidx + k;
     while (an(ch()))
       in_byte();
     return 1;
@@ -1659,7 +1659,7 @@ heir1(lval)
   blanks();
   if (ch() != '=')
     return k;
-  ++lptr;
+  ++lidx;
   right = last_node;
   if (k == 0)
     needlval();
@@ -1741,8 +1741,8 @@ heir5(lval) int lval[]; {
 
   k = heir6(lval);
   blanks();
-  if ((streq(line + lptr, "==") == 0) &
-      (streq(line + lptr, "!=") == 0))
+  if ((streq(line + lidx, "==") == 0) &
+      (streq(line + lidx, "!=") == 0))
     return k;
   if (k)
     rvalue(lval);
@@ -1790,14 +1790,14 @@ heir6(lval)
 
   k = heir7(lval);
   blanks();
-  if ((streq(line + lptr, "<") == 0) &
-      (streq(line + lptr, ">") == 0) &
-      (streq(line + lptr, "<=") == 0) &
-      (streq(line + lptr, ">=") == 0))
+  if ((streq(line + lidx, "<") == 0) &
+      (streq(line + lidx, ">") == 0) &
+      (streq(line + lidx, "<=") == 0) &
+      (streq(line + lidx, ">=") == 0))
   return k;
-  if (streq(line + lptr, ">>"))
+  if (streq(line + lidx, ">>"))
     return k;
-  if (streq(line + lptr, "<<"))
+  if (streq(line + lidx, "<<"))
     return k;
   if (k)
     rvalue(lval);
@@ -1806,12 +1806,12 @@ heir6(lval)
       heir6wrk(1, lval);
     else if (match(">="))
       heir6wrk(2, lval);
-    else if (streq(line + lptr, "<") &
-            (streq(line + lptr, "<<") == 0)) {
+    else if (streq(line + lidx, "<") &
+            (streq(line + lidx, "<<") == 0)) {
       in_byte();
       heir6wrk(3, lval);
-    } else if (streq(line + lptr, ">") &
-              (streq(line + lptr, ">>") == 0)) {
+    } else if (streq(line + lidx, ">") &
+              (streq(line + lidx, ">>") == 0)) {
       in_byte();
       heir6wrk(4, lval);
     } else
@@ -1889,8 +1889,8 @@ heir7(lval)
 
   k = heir8(lval);
   blanks();
-  if ((streq(line + lptr, ">>") == 0) &
-      (streq(line + lptr, "<<") == 0))
+  if ((streq(line + lidx, ">>") == 0) &
+      (streq(line + lidx, "<<") == 0))
     return k;
   if (k)
     rvalue(lval);
@@ -2274,7 +2274,7 @@ callfunction(ptr)
   blanks();             /* The opening parenthesis has already been consumed */
   if (ptr == 0)
     left = last_node;  /* Indirect call */
-  while (streq(line + lptr, ")") == 0) {
+  while (streq(line + lidx, ")") == 0) {
     if (endst())
       break;
     if (heir1(lval))
@@ -2428,7 +2428,7 @@ pstr(val)
     return 0;
   while (ch() != 39)
     k = (k & 255) * 256 + (litchar() & 255);
-  ++lptr;
+  ++lidx;
   val[0] = k;
   return 1;
 }
@@ -2466,23 +2466,23 @@ litchar()
     return gch();
   gch();
   if (ch() == 'n') {
-    ++lptr;
+    ++lidx;
     return 10;
   }
   if (ch() == 't') {
-    ++lptr;
+    ++lidx;
     return 9;
   }
   if (ch() == 'b') {
-    ++lptr;
+    ++lidx;
     return 8;
   }
   if (ch() == 'f') {
-    ++lptr;
+    ++lidx;
     return 12;
   }
   if (ch() == 'r') {
-    ++lptr;
+    ++lidx;
     return 13;
   }
   i = 3;

@@ -13,52 +13,52 @@
 #include <string.h>
 
 #define NO       0
-#define SI       1
+#define YES      1
 
-#define TAM_LIN  128
-#define TAM_BUF  2048
+#define LINE_SIZE  128
+#define BUF_SIZE  2048
 
 /*
- ** Etiqueta del ensamblador
+ ** Assembler label
  */
-struct etiqueta {
-    struct etiqueta *siguiente;   /* Siguiente etiqueta en la tabla */
-    struct etiqueta *secuencia;   /* Secuencia lineal */
-    int tipo;                     /* 0= Es una dirección, 1= Es un dato */
-    int dato;                     /* Dato/dirección */
-    char nombre[1];               /* Nombre de la etiqueta, terminado en 0 */
+struct label {
+    struct label *next;        /* Next label in the table */
+    struct label *sequence;    /* Linear sequence */
+    int type;                     /* 0= address, 1= data value */
+    int value;                    /* Data/address */
+    char name[1];                     /* Label name, null-terminated */
 };
 
 /*
- ** Indefinido para ensanchamiento
+ ** Unresolved entry for widening
  */
-struct indefinido {
-    struct indefinido *siguiente; /* Siguiente indefinido */
-    int codigo;                   /* Código de instrucción (0 a 15), 16 indica */
-    /* db y 17 indica dw */
-    int direccion;                /* Dirección */
-    char expresion[1];            /* Expresión */
+struct unresolved {
+    struct unresolved *next;     /* Next unresolved entry */
+    int opcode;                   /* Instruction opcode (0 to 15); 16 means */
+    /* db, and 17 means dw */
+    int address;                 /* Address */
+    char expression[1];          /* Expression */
 };
 
 /*
- ** Tabla de instrucciones
+ ** Instruction table
  */
-char *tabla[] = {
+char *instr_table[] = {
     
     /*
-     ** Instrucciones básicas
+     ** Basic instructions
      */
     "j", "ldlp", "pfix", "ldnl", "ldc", "ldnlp", "nfix", "ldl",
     "adc", "call", "cj", "ajw", "eqc", "stl", "stnl", "opr",
     
     /*
-     ** Operaciones básicas
+     ** Basic operations
      */
     "rev", "lb", "bsub", "endp", "diff", "add", "gcall", "in",
     "prod", "gt", "wsub", "out", "sub", "startp", "outbyte", "outword",
     
     /*
-     ** Instrucciones
+     ** Instructions
      */
     "seterr", "?", "resetch", "csub0", "?", "stopp", "ladd", "stlb",
     "sthf", "norm", "ldiv", "ldpi", "stlf", "xdble", "ldpri", "rem",
@@ -98,7 +98,7 @@ char *tabla[] = {
     "?", "?", "?", "?", "?", "?", "?", "?",
     
     /*
-     ** Instrucciones de microcódigo de la FPU
+     ** FPU microcode instructions
      */
     "?", "fpusqrtfirst", "fpusqrtstep", "fpusqrtlast",
     "fpurp", "fpurm", "fpurz", "fpur32tor64",
@@ -137,10 +137,10 @@ char *tabla[] = {
 };
 
 /*
- ** Tabla de dispersión
+ ** Hash table
  */
-struct etiqueta *dispersion[256];  /* Tabla de dispersión para etiquetas */
-struct etiqueta *ultima_definida;  /* Última etiqueta definida */
+struct label *hash_table[256];  /* Hash table for labels */
+struct label *last_defined;  /* Last label defined */
 
 char *input_file;
 char *output_file;
@@ -148,70 +148,70 @@ char *temporary1_file;
 char *temporary2_file;
 char *library_file;
 
-int paso;                          /* Paso del ensamblaje */
-int err;
-FILE *archivo_entrada;
-char *ap_proceso;                  /* Apuntador de proceso (en línea) */
+int pass_num;                          /* Assembly pass number */
+int parse_err;
+FILE *input_fp;
+char *line_ptr;                  /* Processing pointer (in line) */
 
-char preins[8];
-char oriins[8];
-int acumula;
+char pre_ins[8];
+char orig_ins[8];
+int accum;
 
 FILE *temp1;
 FILE *temp2;
-int linea_actual;                  /* Línea actual de proceso */
-int errores_detectados;            /* Total de errores detectados */
-int disponible;
-int pos_ens;
-char *pos_global;
-struct etiqueta *primer_etiq;
-struct indefinido *primer_indef;
-struct indefinido *ultimo_indef;
-int num_indef;
+int current_line;                 /* Current line being processed */
+int errors_detected;            /* Total errors detected */
+int available;
+int asm_pos;
+char *expr_ptr;
+struct label *first_label;
+struct unresolved *first_unres;
+struct unresolved *last_unres;
+int num_unres;
 int ptemp1;
 int ptemp2;
-char nom[15];
-char linea[TAM_LIN];
-char separa[TAM_LIN];
-char separa2[TAM_LIN];
-char etiq_indef[TAM_LIN];
-char btemp1[TAM_BUF];
-char btemp2[TAM_BUF];
+char name_buf[15];
+char line_buf[LINE_SIZE];
+char token[LINE_SIZE];
+char token2[LINE_SIZE];
+char undef_label[LINE_SIZE];
+char buf1[BUF_SIZE];
+char buf2[BUF_SIZE];
 
-void ensambla(void);
-int calcula_dispersion(char *);
-struct etiqueta *define_etiqueta(char *);
-struct etiqueta *busca_etiqueta(char *);
-void libera_memoria(void);
-char *separa_componente(void);
-void procesa(void);
-void verifica_final(void);
-void error_extras(void);
-void ins_op(int);
-void agrega_indefinido(int);
-int evalua_expresion(void);
+void assemble(void);
+int hash_name(char *);
+struct label *define_label(char *);
+struct label *find_label(char *);
+void free_memory(void);
+char *next_token(void);
+void process(void);
+void check_end(void);
+void error_extra_chars(void);
+void emit_basic_op(int);
+void add_unresolved(int);
+int eval_expr(void);
 int eval1(void);
 int eval2(void);
 int eval3(void);
 int eval_hex(void);
 int eval_dec(void);
 void gen_ins(int, int);
-void ins_sim(int);
-void ins_ext(int);
+void emit_simple(int);
+void emit_extended(int);
 void def_byte(void);
-void def_pal32(void);
-void def_espacio(void);
-void def_equiv(void);
-int compara(char *, char *);
-int lee_linea(void);
-void enlaza(void);
-void repaso(void);
-void copia(int, int);
-void etemp1(int);
-void vtemp1(void);
-void etemp2(int);
-void vtemp2(void);
-int ltemp1(void);
+void def_word32(void);
+void def_space(void);
+void def_equ(void);
+int match_str(char *, char *);
+int read_line(void);
+void link_pass(void);
+void widen_pass(void);
+void copy_range(int, int);
+void write_temp1(int);
+void flush_temp1(void);
+void write_temp2(int);
+void flush_temp2(void);
+int read_temp1(void);
 void error(char *, char *);
 
 /*
@@ -232,158 +232,158 @@ int main(int argc, char *argv[])
         library_file = argv[3];
     else
         library_file = NULL;
-    ensambla();
+    assemble();
     exit(0);
 }
 
 /*
- ** Realiza el ensamblaje
+ ** Perform the assembly
  */
-void ensambla(void)
+void assemble(void)
 {
     temporary1_file = "_tasm1.tmp";
     temporary2_file = "_tasm2.tmp";
-    disponible = 1;
-    primer_etiq = NULL;
-    ultima_definida = NULL;
-    primer_indef = NULL;
-    ultimo_indef = NULL;
-    num_indef = 0;
-    pos_ens = 0;
-    archivo_entrada = fopen(input_file, "r");
-    if (archivo_entrada == NULL) {
+    available = 1;
+    first_label = NULL;
+    last_defined = NULL;
+    first_unres = NULL;
+    last_unres = NULL;
+    num_unres = 0;
+    asm_pos = 0;
+    input_fp = fopen(input_file, "r");
+    if (input_fp == NULL) {
         fprintf(stderr, "Unable to open '%s'\n", input_file);
         return;
     }
     temp1 = fopen(temporary1_file, "wb");
     if (temp1 == NULL) {
         fprintf(stderr, "Couldn't open temporary write file\n");
-        fclose(archivo_entrada);
+        fclose(input_fp);
         return;
     }
     ptemp1 = 0;
-    paso = 0;
-    linea_actual = 0;
-    procesa();
-    fclose(archivo_entrada);
+    pass_num = 0;
+    current_line = 0;
+    process();
+    fclose(input_fp);
     if (library_file != NULL) {
-        archivo_entrada = fopen(library_file, "r");
-        if (archivo_entrada == NULL) {
+        input_fp = fopen(library_file, "r");
+        if (input_fp == NULL) {
             fprintf(stderr, "Unable to open '%s'\n", library_file);
         } else {
-            procesa();
-            fclose(archivo_entrada);
+            process();
+            fclose(input_fp);
         }
     }
-    vtemp1();
-    paso = 1;
-    enlaza();
-    libera_memoria();
-    fprintf(stderr, "%d error(s) detected.\n", errores_detectados);
-    fprintf(stderr, "%d line(s) assembled.\n\n", linea_actual);
+    flush_temp1();
+    pass_num = 1;
+    link_pass();
+    free_memory();
+    fprintf(stderr, "%d error(s) detected.\n", errors_detected);
+    fprintf(stderr, "%d line(s) assembled.\n\n", current_line);
 }
 
 /*
- ** Cálcula el valor de dispersión para un nombre
+ ** Cálcula el val de dispersión para un label_name
  */
-int calcula_dispersion(char *nombre)
+int hash_name(char *label_name)
 {
-    int valor;
+    int val;
     
-    valor = 0;
-    while (*nombre)
-        valor = (valor << 1) + (*nombre++ & 0xff);
-    return valor & 0xff;
+    val = 0;
+    while (*label_name)
+        val = (val << 1) + (*label_name++ & 0xff);
+    return val & 0xff;
 }
 
 /*
- ** Define una nueva etiqueta
+ ** Define a new label
  */
-struct etiqueta *define_etiqueta(char *nombre)
+struct label *define_label(char *label_name)
 {
-    struct etiqueta *nueva;
+    struct label *new_entry;
     int c;
     
-    nueva = malloc(sizeof(struct etiqueta) + strlen(nombre) + 1);
-    if (nueva == NULL)
+    new_entry = malloc(sizeof(struct label) + strlen(label_name) + 1);
+    if (new_entry == NULL)
         return NULL;
-    c = calcula_dispersion(nombre);
-    nueva->siguiente = dispersion[c];
-    dispersion[c] = nueva;
-    nueva->secuencia = NULL;
-    nueva->tipo = 0;
-    nueva->dato = pos_ens;
-    strcpy(nueva->nombre, nombre);
-    if (primer_etiq == NULL)
-        primer_etiq = nueva;
-    if (ultima_definida != NULL)
-        ultima_definida->secuencia = nueva;
-    ultima_definida = nueva;
-    return nueva;
+    c = hash_name(label_name);
+    new_entry->next = hash_table[c];
+    hash_table[c] = new_entry;
+    new_entry->sequence = NULL;
+    new_entry->type = 0;
+    new_entry->value = asm_pos;
+    strcpy(new_entry->name, label_name);
+    if (first_label == NULL)
+        first_label = new_entry;
+    if (last_defined != NULL)
+        last_defined->sequence = new_entry;
+    last_defined = new_entry;
+    return new_entry;
 }
 
 /*
- ** Busca una etiqueta
+ ** Search for a label
  */
-struct etiqueta *busca_etiqueta(char *nombre)
+struct label *find_label(char *label_name)
 {
-    struct etiqueta *lista;
+    struct label *list;
     int c;
     
-    c = calcula_dispersion(nombre);
-    lista = dispersion[c];
-    while (lista != NULL) {
-        if (strcmp(lista->nombre, nombre) == 0)
-            return lista;
-        lista = lista->siguiente;
+    c = hash_name(label_name);
+    list = hash_table[c];
+    while (list != NULL) {
+        if (strcmp(list->name, label_name) == 0)
+            return list;
+        list = list->next;
     }
     return NULL;
 }
 
 /*
- ** Libera la memoria asignada
+ ** Free allocated memory
  */
-void libera_memoria(void)
+void free_memory(void)
 {
-    struct etiqueta *lista;
-    struct etiqueta *siguiente;
-    struct indefinido *lista2;
-    struct indefinido *siguiente2;
+    struct label *list;
+    struct label *next_ptr;
+    struct unresolved *list2;
+    struct unresolved *next_ptr2;
     int c;
     
     for (c = 0; c < 256; c++) {
-        lista = dispersion[c];
-        while (lista != NULL) {
-            siguiente = lista->siguiente;
-            free(lista);
-            lista = siguiente;
+        list = hash_table[c];
+        while (list != NULL) {
+            next_ptr = list->next;
+            free(list);
+            list = next_ptr;
         }
-        dispersion[c] = NULL;
+        hash_table[c] = NULL;
     }
-    primer_etiq = NULL;
-    ultima_definida = NULL;
-    lista2 = primer_indef;
-    while (lista2 != NULL) {
-        siguiente2 = lista2->siguiente;
-        free(lista2);
-        lista2 = siguiente2;
+    first_label = NULL;
+    last_defined = NULL;
+    list2 = first_unres;
+    while (list2 != NULL) {
+        next_ptr2 = list2->next;
+        free(list2);
+        list2 = next_ptr2;
     }
-    primer_indef = NULL;
-    ultimo_indef = NULL;
+    first_unres = NULL;
+    last_unres = NULL;
 }
 
 /*
- ** Separa un componente de la línea de entrada
+ ** Extract the next token from the input line
  */
-char *separa_componente(void)
+char *next_token(void)
 {
-    char *ap1 = ap_proceso;
-    char *ap2 = separa;
+    char *ap1 = line_ptr;
+    char *ap2 = token;
     int c;
     
     while (isspace(*ap1))
         ap1++;
-    if (*ap1 == ';') {  /* Los comentarios son anulados */
+    if (*ap1 == ';') {  /* Comments are discarded */
         *ap2 = '\0';
         return ap2;
     }
@@ -420,78 +420,78 @@ char *separa_componente(void)
     *ap2 = '\0';
     while (isspace(*ap1))
         ap1++;
-    ap_proceso = ap1;
-    if (ap2 != separa)
+    line_ptr = ap1;
+    if (ap2 != token)
         return ap2 - 1;
     return ap2;
 }
 
 /*
- ** Procesa el archivo de entrada
+ ** Process the input file
  */
-void procesa(void)
+void process(void)
 {
-    int instruccion;
-    int etiq;
+    int instr;
+    int has_label;
     char *ap;
-    char *final;
+    char *end_ptr;
     
-    while (!lee_linea()) {
-        etiq = NO;
+    while (!read_line()) {
+        has_label = NO;
         while (1) {
-            ap = separa_componente();
+            ap = next_token();
             if (*ap == ':') {
                 *ap = '\0';
-                if (isalpha(*separa) || *separa == '_') {
-                    if (busca_etiqueta(separa) != NULL) {
-                        error("Etiqueta redefinida", separa);
-                    } else if (define_etiqueta(separa) == NULL) {
-                        error("Sin memoria", NULL);
+                if (isalpha(*token) || *token == '_') {
+                    if (find_label(token) != NULL) {
+                        error("Label redefined", token);
+                    } else if (define_label(token) == NULL) {
+                        error("Out of memory", NULL);
                         return;
                     }
                 } else {
-                    error("Etiqueta inválida", separa);
+                    error("Invalid label", token);
                 }
-                ap = separa_componente();
+                ap = next_token();
             }
-            if (separa[0] == '\0')
+            if (token[0] == '\0')
                 break;
-            if (compara("db", separa)) {
+            if (match_str("db", token)) {
                 def_byte();
-                verifica_final();
+                check_end();
                 break;
-            } else if (compara("dw", separa)) {
-                def_pal32();
-                verifica_final();
+            } else if (match_str("dw", token)) {
+                def_word32();
+                check_end();
                 break;
-            } else if (compara("ds", separa)) {
-                def_espacio();
-                verifica_final();
+            } else if (match_str("ds", token)) {
+                def_space();
+                check_end();
                 break;
-            } else if (compara("equ", separa)) {
-                def_equiv();
-                verifica_final();
+            } else if (match_str("equ", token)) {
+                def_equ();
+                check_end();
                 break;
             } else {
-                instruccion = 0;
-                while (instruccion < 528) {
-                    ap = tabla[instruccion++];
+                instr = 0;
+                while (instr < 528) {
+                    ap = instr_table[instr++];
                     if (*ap == '?')
                         continue;
-                    if (compara(ap, separa)) {
-                        --instruccion;
-                        if (instruccion < 16)
-                            ins_op(instruccion);
-                        else if (instruccion < 272)
-                            ins_sim(instruccion - 16);
-                        else if (instruccion < 528)
-                            ins_ext(instruccion - 272);
-                        verifica_final();
+                    if (match_str(ap, token)) {
+                        --instr;
+                        if (instr < 16)
+                            emit_basic_op(instr);
+                        else if (instr < 272)
+                            emit_simple(instr - 16);
+                        else if (instr < 528)
+                            emit_extended(instr - 272);
+                        check_end();
                         break;
                     }
                 }
-                if (instruccion == 528)
-                    error("Instrucción indefinida", separa);
+                if (instr == 528)
+                    error("Instrucción indefinida", token);
                 else
                     break;
             }
@@ -501,281 +501,281 @@ void procesa(void)
 }
 
 /*
- ** Verifica el final correcto de una instrucción
+ ** Verify the correct end of an instruction
  */
-void verifica_final(void)
+void check_end(void)
 {
-    if (*ap_proceso && *ap_proceso != ';')
-        error_extras();
+    if (*line_ptr && *line_ptr != ';')
+        error_extra_chars();
 }
 
 /*
- ** Indica un error de caracteres extras en la línea
+ ** Report an error de caracteres extras en la línea
  */
-void error_extras(void)
+void error_extra_chars(void)
 {
-    error("Caracteres extras", NULL);
+    error("Extra characters", NULL);
 }
 
 /*
- ** Procesa una instrucción básica
+ ** Process a basic instruction
  */
-void ins_op(int ins)
+void emit_basic_op(int op)
 {
-    int valor;
-    int arregla;
-    int salto;
+    int val;
+    int adjust;
+    int jump_dist;
     
-    separa_componente();
-    err = 0;
-    pos_global = separa;
-    valor = evalua_expresion();
-    if (*pos_global)
-        error_extras();
-    if (err) {
-        agrega_indefinido(ins);
-        etemp1(ins << 4);
-        ++pos_ens;
+    next_token();
+    parse_err = 0;
+    expr_ptr = token;
+    val = eval_expr();
+    if (*expr_ptr)
+        error_extra_chars();
+    if (parse_err) {
+        add_unresolved(op);
+        write_temp1(op << 4);
+        ++asm_pos;
         return;
     }
-    if (ins == 0 || ins == 9 || ins == 10) {
-        agrega_indefinido(ins);
-        arregla = 1;
+    if (op == 0 || op == 9 || op == 10) {
+        add_unresolved(op);
+        adjust = 1;
         while (1) {
-            acumula = 0;
-            gen_ins(ins, salto = (valor - (pos_ens + arregla)));
-            if (pos_ens + acumula + salto == valor)
+            accum = 0;
+            gen_ins(op, jump_dist = (val - (asm_pos + adjust)));
+            if (asm_pos + accum + jump_dist == val)
                 break;
-            ++arregla;
+            ++adjust;
         }
     } else {
-        acumula = 0;
-        gen_ins(ins, valor);
+        accum = 0;
+        gen_ins(op, val);
     }
-    valor = 0;
-    while (valor < acumula) {
-        etemp1(preins[valor++]);
-        ++pos_ens;
+    val = 0;
+    while (val < accum) {
+        write_temp1(pre_ins[val++]);
+        ++asm_pos;
     }
 }
 
 /*
- ** Agrega un indefinido a la lista
+ ** Add an unresolved entry to the list
  */
-void agrega_indefinido(int clave)
+void add_unresolved(int key)
 {
-    struct indefinido *nuevo;
-    char *pos;
+    struct unresolved *new_entry;
+    char *addr;
     char *pos1;
     int u;
     
-    nuevo = malloc(sizeof(struct indefinido) + strlen(separa) + 1);
-    if (nuevo == NULL) {
-        error("Sin memoria", NULL);
+    new_entry = malloc(sizeof(struct unresolved) + strlen(token) + 1);
+    if (new_entry == NULL) {
+        error("Out of memory", NULL);
         return;
     }
-    nuevo->siguiente = NULL;
-    nuevo->codigo = clave;
-    nuevo->direccion = pos_ens;
-    strcpy(nuevo->expresion, separa);
-    if (primer_indef == NULL)
-        primer_indef = nuevo;
-    if (ultimo_indef != NULL)
-        ultimo_indef->siguiente = nuevo;
-    ultimo_indef = nuevo;
-    ++num_indef;
+    new_entry->next = NULL;
+    new_entry->opcode = key;
+    new_entry->address = asm_pos;
+    strcpy(new_entry->expression, token);
+    if (first_unres == NULL)
+        first_unres = new_entry;
+    if (last_unres != NULL)
+        last_unres->next = new_entry;
+    last_unres = new_entry;
+    ++num_unres;
 }
 
 /*
- ** Evalua una expresión
+ ** Evaluate an expression
  */
-int evalua_expresion(void)
+int eval_expr(void)
 {
-    int valor1;
+    int val1;
     
-    valor1 = eval1();
-    while (*pos_global == '+' || *pos_global == '-') {
-        if (*pos_global == '+') {
-            ++pos_global;
-            valor1 += eval1();
+    val1 = eval1();
+    while (*expr_ptr == '+' || *expr_ptr == '-') {
+        if (*expr_ptr == '+') {
+            ++expr_ptr;
+            val1 += eval1();
         } else {
-            ++pos_global;
-            valor1 -= eval1();
+            ++expr_ptr;
+            val1 -= eval1();
         }
     }
-    return valor1;
+    return val1;
 }
 
 /*
- ** Nivel 1 de evaluación
+ ** Evaluation level 1
  */
 int eval1(void)
 {
-    if (*pos_global == '+')
-        ++pos_global;
-    else if (*pos_global == '-') {
-        ++pos_global;
+    if (*expr_ptr == '+')
+        ++expr_ptr;
+    else if (*expr_ptr == '-') {
+        ++expr_ptr;
         return -eval2();
     }
     return eval2();
 }
 
 /*
- ** Nivel 2 de evaluación
+ ** Evaluation level 2
  */
 int eval2(void)
 {
-    int valor1;
+    int val1;
     
-    valor1 = eval3();
-    while (*pos_global == '*' || *pos_global == '/' || *pos_global == '%') {
-        if (*pos_global == '*') {
-            ++pos_global;
-            valor1 *= eval3();
-        } else if (*pos_global == '/') {
-            ++pos_global;
-            valor1 /= eval3();
+    val1 = eval3();
+    while (*expr_ptr == '*' || *expr_ptr == '/' || *expr_ptr == '%') {
+        if (*expr_ptr == '*') {
+            ++expr_ptr;
+            val1 *= eval3();
+        } else if (*expr_ptr == '/') {
+            ++expr_ptr;
+            val1 /= eval3();
         } else {
-            ++pos_global;
-            valor1 %= eval3();
+            ++expr_ptr;
+            val1 %= eval3();
         }
     }
-    return valor1;
+    return val1;
 }
 
 /*
- ** Nivel 3 de evaluación
+ ** Evaluation level 3
  */
 int eval3(void)
 {
-    struct etiqueta *etiqueta;
+    struct label *lbl;
     char *ap;
-    int valor;
+    int val;
     
-    if (*pos_global == '(') {
-        ++pos_global;
-        valor = evalua_expresion();
-        if (*pos_global != ')')
-            error("Falta parentesis derecho", NULL);
+    if (*expr_ptr == '(') {
+        ++expr_ptr;
+        val = eval_expr();
+        if (*expr_ptr != ')')
+            error("Missing closing parenthesis", NULL);
         else
-            ++pos_global;
-        return valor;
-    } else if (isdigit(*pos_global)) {
-        if (*(pos_global + 1) == 'X' || *(pos_global + 1) == 'x')
+            ++expr_ptr;
+        return val;
+    } else if (isdigit(*expr_ptr)) {
+        if (*(expr_ptr + 1) == 'X' || *(expr_ptr + 1) == 'x')
             return eval_hex();
         else
             return eval_dec();
-    } else if (*pos_global == 39) {
-        pos_global++;
-        valor = *pos_global++;
-        if (valor == 39) {
-            if (*pos_global == 39 && pos_global[1] == 39)
-                pos_global += 2;
+    } else if (*expr_ptr == 39) {
+        expr_ptr++;
+        val = *expr_ptr++;
+        if (val == 39) {
+            if (*expr_ptr == 39 && expr_ptr[1] == 39)
+                expr_ptr += 2;
             else
-                error("Falta apóstrofe final", NULL);
+                error("Missing closing apostrophe", NULL);
         } else {
-            if (*pos_global == 39)
-                pos_global++;
+            if (*expr_ptr == 39)
+                expr_ptr++;
             else
-                error("Falta apóstrofe final", NULL);
+                error("Missing closing apostrophe", NULL);
         }
-        return valor;
-    } else if (isalpha(*pos_global) || *pos_global == '_') {
-        ap = separa2;
-        while (*pos_global == '_'
-               || isalpha(*pos_global)
-               || isdigit(*pos_global))
-            *ap++ = *pos_global++;
+        return val;
+    } else if (isalpha(*expr_ptr) || *expr_ptr == '_') {
+        ap = token2;
+        while (*expr_ptr == '_'
+               || isalpha(*expr_ptr)
+               || isdigit(*expr_ptr))
+            *ap++ = *expr_ptr++;
         *ap = '\0';
-        if ((etiqueta = busca_etiqueta(separa2)) != NULL) {
-            valor = etiqueta->dato;
-            return valor;
+        if ((lbl = find_label(token2)) != NULL) {
+            val = lbl->value;
+            return val;
         } else {
-            strcpy(etiq_indef, separa2);
-            err = 1;
+            strcpy(undef_label, token2);
+            parse_err = 1;
             return 0;
         }
     } else {
-        error("Error de sintaxis", NULL);
+        error("Syntax error", NULL);
         return 0;
     }
 }
 
 /*
- ** Procesa un número hexadecimal
+ ** Process a hexadecimal number
  */
 int eval_hex(void)
 {
     int c;
-    int valor;
+    int val;
     
-    valor = 0;
-    pos_global += 2;
-    while (isxdigit(*pos_global)) {
-        c = toupper(*pos_global++) - '0';
+    val = 0;
+    expr_ptr += 2;
+    while (isxdigit(*expr_ptr)) {
+        c = toupper(*expr_ptr++) - '0';
         if (c > 9)
             c -= 7;
-        valor = (valor << 4) | c;
+        val = (val << 4) | c;
     }
-    return valor;
+    return val;
 }
 
 /*
- ** Procesa un número decimal
+ ** Process a decimal number
  */
 int eval_dec(void)
 {
     int c;
-    int valor;
+    int val;
     
-    valor = 0;
-    while (isdigit(*pos_global)) {
-        c = *pos_global++ - '0';
-        valor = valor * 10 + c;
+    val = 0;
+    while (isdigit(*expr_ptr)) {
+        c = *expr_ptr++ - '0';
+        val = val * 10 + c;
     }
-    return valor;
+    return val;
 }
 
 /*
- ** Genera las instrucciones adecuadas para cargar un valor
+ ** Generate the instructions needed to load a value
  */
-void gen_ins(int oper, int valor)
+void gen_ins(int oper, int val)
 {
-    if (valor < 0)
-        gen_ins(6, ~valor >> 4);
-    else if (valor >= 16)
-        gen_ins(2, valor >> 4);
-    preins[acumula++] = (oper << 4) | (valor & 15);
+    if (val < 0)
+        gen_ins(6, ~val >> 4);
+    else if (val >= 16)
+        gen_ins(2, val >> 4);
+    pre_ins[accum++] = (oper << 4) | (val & 15);
 }
 
 /*
- ** Genera una instrucción
+ ** Generate a simple instruction
  */
-void ins_sim(int ins)
+void emit_simple(int op)
 {
-    if (ins > 15) {
-        etemp1(0x20 + (ins >> 4));
-        ++pos_ens;
+    if (op > 15) {
+        write_temp1(0x20 + (op >> 4));
+        ++asm_pos;
     }
-    etemp1(0xf0 + (ins & 15));
-    ++pos_ens;
+    write_temp1(0xf0 + (op & 15));
+    ++asm_pos;
 }
 
 /*
- ** Genera una instrucción extendida
+ ** Generate an extended instruction
  */
-void ins_ext(int ins)
+void emit_extended(int op)
 {
-    if (ins > 15) {
-        etemp1(0x20 + (ins >> 4));
-        ++pos_ens;
+    if (op > 15) {
+        write_temp1(0x20 + (op >> 4));
+        ++asm_pos;
     }
-    etemp1(0x40 + (ins & 15));
-    ++pos_ens;
-    etemp1(0x2a);
-    ++pos_ens;
-    etemp1(0xfb);
-    ++pos_ens;
+    write_temp1(0x40 + (op & 15));
+    ++asm_pos;
+    write_temp1(0x2a);
+    ++asm_pos;
+    write_temp1(0xfb);
+    ++asm_pos;
 }
 
 /*
@@ -783,209 +783,209 @@ void ins_ext(int ins)
  */
 void def_byte(void)
 {
-    int valor;
+    int val;
     
-    separa_componente();
-    pos_global = separa;
+    next_token();
+    expr_ptr = token;
     while (1) {
-        err = 0;
-        if (*pos_global == '"') {
-            pos_global++;
-            while (*pos_global && (*pos_global != '"' || pos_global[1] == '"')) {
-                etemp1(*pos_global);
-                ++pos_ens;
-                if (pos_global[0] == '"' && pos_global[1] == '"')
-                    pos_global++;
-                pos_global++;
+        parse_err = 0;
+        if (*expr_ptr == '"') {
+            expr_ptr++;
+            while (*expr_ptr && (*expr_ptr != '"' || expr_ptr[1] == '"')) {
+                write_temp1(*expr_ptr);
+                ++asm_pos;
+                if (expr_ptr[0] == '"' && expr_ptr[1] == '"')
+                    expr_ptr++;
+                expr_ptr++;
             }
-            if (*pos_global != '"') {
-                error("Faltan comillas", NULL);
+            if (*expr_ptr != '"') {
+                error("Missing closing quote", NULL);
             } else {
-                ++pos_global;
+                ++expr_ptr;
             }
-        } else if (*pos_global == '\'') {
-            pos_global++;
-            while (*pos_global && (*pos_global != '\'' || pos_global[1] == '\'')) {
-                etemp1(*pos_global);
-                ++pos_ens;
-                if (pos_global[0] == '\'' && pos_global[1] == '\'')
-                    pos_global++;
-                pos_global++;
+        } else if (*expr_ptr == '\'') {
+            expr_ptr++;
+            while (*expr_ptr && (*expr_ptr != '\'' || expr_ptr[1] == '\'')) {
+                write_temp1(*expr_ptr);
+                ++asm_pos;
+                if (expr_ptr[0] == '\'' && expr_ptr[1] == '\'')
+                    expr_ptr++;
+                expr_ptr++;
             }
-            if (*pos_global != '\'') {
-                error("Faltan apóstrofe", NULL);
+            if (*expr_ptr != '\'') {
+                error("Missing closing apostrophe", NULL);
             } else {
-                ++pos_global;
+                ++expr_ptr;
             }
         } else {
-            valor = evalua_expresion();
-            if (err)
-                agrega_indefinido(16);
-            etemp1(valor & 255);
-            ++pos_ens;
+            val = eval_expr();
+            if (parse_err)
+                add_unresolved(16);
+            write_temp1(val & 255);
+            ++asm_pos;
         }
-        if (*pos_global != ',') {
-            if (*pos_global)
-                error("Falta una coma", NULL);
+        if (*expr_ptr != ',') {
+            if (*expr_ptr)
+                error("Missing comma", NULL);
             return;
         }
-        ++pos_global;
+        ++expr_ptr;
     }
 }
 
 /*
  ** Definición de palabras de 32 bits
  */
-void def_pal32(void)
+void def_word32(void)
 {
-    int valor;
+    int val;
     
-    separa_componente();
-    pos_global = separa;
+    next_token();
+    expr_ptr = token;
     while (1) {
-        err = 0;
-        valor = evalua_expresion();
-        if (err)
-            agrega_indefinido(17);
-        etemp1(valor & 255);
-        ++pos_ens;
-        etemp1((valor >> 8) & 255);
-        ++pos_ens;
-        etemp1((valor >> 16) & 255);
-        ++pos_ens;
-        etemp1((valor >> 24) & 255);
-        ++pos_ens;
-        if (*pos_global != ',') {
-            if (*pos_global)
-                error("Falta una coma", NULL);
+        parse_err = 0;
+        val = eval_expr();
+        if (parse_err)
+            add_unresolved(17);
+        write_temp1(val & 255);
+        ++asm_pos;
+        write_temp1((val >> 8) & 255);
+        ++asm_pos;
+        write_temp1((val >> 16) & 255);
+        ++asm_pos;
+        write_temp1((val >> 24) & 255);
+        ++asm_pos;
+        if (*expr_ptr != ',') {
+            if (*expr_ptr)
+                error("Missing comma", NULL);
             return;
         }
-        ++pos_global;
+        ++expr_ptr;
     }
 }
 
 /*
- ** Definición de espacio libre
+ ** Free-space definition
  */
-void def_espacio(void)
+void def_space(void)
 {
-    int valor;
+    int val;
     
-    separa_componente();
-    pos_global = separa;
-    err = 0;
-    valor = evalua_expresion();
-    if (*pos_global)
-        error_extras();
-    if (err) {
-        error("Se requiere un valor definido", NULL);
+    next_token();
+    expr_ptr = token;
+    parse_err = 0;
+    val = eval_expr();
+    if (*expr_ptr)
+        error_extra_chars();
+    if (parse_err) {
+        error("A defined value is required", NULL);
         return;
     }
-    while (valor--) {
-        etemp1(0);
-        ++pos_ens;
+    while (val--) {
+        write_temp1(0);
+        ++asm_pos;
     }
 }
 
 /*
- ** Definición de equivalencia de etiqueta
+ ** Label equivalence definition
  */
-void def_equiv(void)
+void def_equ(void)
 {
-    int valor;
+    int val;
     
-    separa_componente();
-    pos_global = separa;
-    err = 0;
-    valor = evalua_expresion();
-    if (*pos_global)
-        error_extras();
-    if (err) {
-        error("Se requiere un valor definido", NULL);
+    next_token();
+    expr_ptr = token;
+    parse_err = 0;
+    val = eval_expr();
+    if (*expr_ptr)
+        error_extra_chars();
+    if (parse_err) {
+        error("A defined value is required", NULL);
         return;
     }
-    if (ultima_definida == NULL) {
-        error("equ sin etiqueta", NULL);
+    if (last_defined == NULL) {
+        error("equ without label", NULL);
         return;
     }
-    ultima_definida->tipo = 1;
-    ultima_definida->dato = valor;
+    last_defined->type = 1;
+    last_defined->value = val;
 }
 
 /*
  ** Comparación con instrucción
  */
-int compara(char *ins, char *separa)
+int match_str(char *op, char *token)
 {
-    while (*ins == *separa++)
-        if (*ins++ == 0)
+    while (*op == *token++)
+        if (*op++ == 0)
             return 1;
     return 0;
 }
 
 /*
- ** Lee una línea del archivo de entrada
+ ** Read a line from the input file
  */
-int lee_linea(void)
+int read_line(void)
 {
     char *ap;
     int c;
     
-    ap = linea;
+    ap = line_buf;
     while (1) {
-        c = fgetc(archivo_entrada);
+        c = fgetc(input_fp);
         if (c == EOF) {
-            if (ap != linea)
+            if (ap != line_buf)
                 break;
-            return 1;  /* Fin de archivo */
+            return 1;  /* End of file */
         }
         *ap = c;
         if (*ap == '\r')
             continue;
         if (*ap == '\n')
             break;
-        if (ap - linea < sizeof(linea) - 1)
+        if (ap - line_buf < sizeof(line_buf) - 1)
             ap++;
     }
     *ap = '\0';
-    linea_actual++;
-    ap_proceso = linea;
-    /*    fprintf(stderr, "[%s]\n", linea);*/
+    current_line++;
+    line_ptr = line_buf;
+    /*    fprintf(stderr, "[%s]\n", line_buf);*/
     return 0;
 }
 
-int algo;
+int changed;
 
 /*
- ** Agranda las instrucciones del archivo final
+ ** Widen instructions in the final file
  */
-void enlaza(void)
+void link_pass(void)
 {
     int c;
     char *p;
     
     while (1) {
         temp1 = fopen(temporary1_file, "rb");
-        ptemp1 = TAM_BUF;
+        ptemp1 = BUF_SIZE;
         temp2 = fopen(temporary2_file, "wb");
         ptemp2 = 0;
-        algo = NO;
-        repaso();
-        vtemp2();
+        changed = NO;
+        widen_pass();
+        flush_temp2();
         fclose(temp1);
         temp1 = NULL;
         remove(temporary1_file);
         p = temporary1_file;
         temporary1_file = temporary2_file;
         temporary2_file = p;
-        if (!algo) {
+        if (!changed) {
             temp1 = fopen(temporary1_file, "rb");
             temp2 = fopen(output_file, "wb");
             while (1) {
-                c = fread(btemp1, 1, TAM_BUF, temp1);
+                c = fread(buf1, 1, BUF_SIZE, temp1);
                 if (c == 0)
                     break;
-                fwrite(btemp1, 1, c, temp2);
+                fwrite(buf1, 1, c, temp2);
             }
             fclose(temp2);
             fclose(temp1);
@@ -996,196 +996,196 @@ void enlaza(void)
 }
 
 /*
- ** Realiza un paso de ensanchamiento
+ ** Perform one widening pass
  */
-void repaso(void)
+void widen_pass(void)
 {
-    struct indefinido *lista;
-    struct etiqueta *lista2;
-    int inicio;
-    int ultimo;
-    int pos;
-    int valor;
-    int byte;
-    int acu;
-    int ins;
-    int arregla;
-    int salto;
-    int cuantos;
+    struct unresolved *list;
+    struct label *list2;
+    int start;
+    int last;
+    int addr;
+    int val;
+    int byte_val;
+    int orig_len;
+    int op;
+    int adjust;
+    int jump_dist;
+    int delta;
     int a;
     int c;
     
-    ultimo = pos_ens;
-    pos_ens = 0;
-    cuantos = 0;
-    inicio = 0;
-    lista = primer_indef;
+    last = asm_pos;
+    asm_pos = 0;
+    delta = 0;
+    start = 0;
+    list = first_unres;
     a = 0;
-    while (lista != NULL) {
-        pos = lista->direccion;
-        copia(inicio, pos);
-        ins = lista->codigo;
-        if (ins == 16) {
-            byte = ltemp1();
-            inicio = pos + 1;
-        } else if (ins == 17) {
-            byte = ltemp1();
-            byte = ltemp1();
-            byte = ltemp1();
-            byte = ltemp1();
-            inicio = pos + 4;
+    while (list != NULL) {
+        addr = list->address;
+        copy_range(start, addr);
+        op = list->opcode;
+        if (op == 16) {
+            byte_val = read_temp1();
+            start = addr + 1;
+        } else if (op == 17) {
+            byte_val = read_temp1();
+            byte_val = read_temp1();
+            byte_val = read_temp1();
+            byte_val = read_temp1();
+            start = addr + 4;
         } else {
-            acu = 0;
+            orig_len = 0;
             while (1) {
-                oriins[acu++] = byte = ltemp1();
-                if ((byte & 0xf0) == 0x20)
+                orig_ins[orig_len++] = byte_val = read_temp1();
+                if ((byte_val & 0xf0) == 0x20)
                     continue;
-                if ((byte & 0xf0) == 0x60)
+                if ((byte_val & 0xf0) == 0x60)
                     continue;
                 break;
             }
-            inicio = pos + acu;
+            start = addr + orig_len;
         }
-        lista->direccion = pos_ens;
-        err = 0;
-        pos_global = lista->expresion;
-        valor = evalua_expresion();
-        if (err) {
-            error("Etiqueta indefinida", etiq_indef);
-            valor = 0;
+        list->address = asm_pos;
+        parse_err = 0;
+        expr_ptr = list->expression;
+        val = eval_expr();
+        if (parse_err) {
+            error("Undefined label", undef_label);
+            val = 0;
         }
-        if (ins == 16) {
-            etemp2(valor);
-            ++pos_ens;
-        } else if (ins == 17) {
-            etemp2(valor);
-            ++pos_ens;
-            etemp2(valor >> 8);
-            ++pos_ens;
-            etemp2(valor >> 16);
-            ++pos_ens;
-            etemp2(valor >> 24);
-            ++pos_ens;
-        } else if (ins == 0 || ins == 9 || ins == 10) {
-            acumula = 0;
-            gen_ins(ins, valor - (pos_ens + acu));
+        if (op == 16) {
+            write_temp2(val);
+            ++asm_pos;
+        } else if (op == 17) {
+            write_temp2(val);
+            ++asm_pos;
+            write_temp2(val >> 8);
+            ++asm_pos;
+            write_temp2(val >> 16);
+            ++asm_pos;
+            write_temp2(val >> 24);
+            ++asm_pos;
+        } else if (op == 0 || op == 9 || op == 10) {
+            accum = 0;
+            gen_ins(op, val - (asm_pos + orig_len));
         } else {
-            acumula = 0;
-            gen_ins(ins, valor);
+            accum = 0;
+            gen_ins(op, val);
         }
-        if (ins != 16 && ins != 17) {
-            valor = 0;
-            while (valor < acumula) {
-                etemp2(preins[valor++]);
-                ++pos_ens;
+        if (op != 16 && op != 17) {
+            val = 0;
+            while (val < accum) {
+                write_temp2(pre_ins[val++]);
+                ++asm_pos;
             }
-            if (acumula != acu) {
-                algo = SI;
-                lista2 = primer_etiq;
-                while (lista2 != NULL) {
-                    if (lista2->tipo == 0) {
-                        valor = lista2->dato;
-                        if (valor >= inicio + cuantos)
-                            valor += acumula - acu;
-                        lista2->dato = valor;
+            if (accum != orig_len) {
+                changed = YES;
+                list2 = first_label;
+                while (list2 != NULL) {
+                    if (list2->type == 0) {
+                        val = list2->value;
+                        if (val >= start + delta)
+                            val += accum - orig_len;
+                        list2->value = val;
                     }
-                    lista2 = lista2->secuencia;
+                    list2 = list2->sequence;
                 }
-                cuantos += acumula - acu;
+                delta += accum - orig_len;
             }
         }
-        lista = lista->siguiente;
+        list = list->next;
 #if 0
         putchar('\r');
-        decimal(++a * 100 / num_indef);
+        decimal(++a * 100 / num_unres);
         putchar('%');
 #endif
     }
-    copia(inicio, ultimo);
+    copy_range(start, last);
 }
 
 /*
- ** Copia datos del archivo temporal 1 en el archivo temporal 2
+ ** Copy data from temp file 1 to temp file 2
  */
-void copia(int inicio, int final)
+void copy_range(int start, int end_ptr)
 {
-    while (inicio++ < final) {
-        etemp2(ltemp1());
-        ++pos_ens;
+    while (start++ < end_ptr) {
+        write_temp2(read_temp1());
+        ++asm_pos;
     }
 }
 
 /*
- ** Escribe datos al archivo temporal 1
+ ** Write data to temp file 1
  */
-void etemp1(int dato)
+void write_temp1(int data)
 {
-    btemp1[ptemp1++] = dato;
-    if (ptemp1 == TAM_BUF) {
-        if (fwrite(btemp1, 1, ptemp1, temp1) != ptemp1)
-            error("Disco lleno", NULL);
+    buf1[ptemp1++] = data;
+    if (ptemp1 == BUF_SIZE) {
+        if (fwrite(buf1, 1, ptemp1, temp1) != ptemp1)
+            error("Disk full", NULL);
         ptemp1 = 0;
     }
 }
 
 /*
- ** Vacia los datos finales en el archivo temporal 1
+ ** Flush final data to temp file 1
  */
-void vtemp1(void)
+void flush_temp1(void)
 {
     if (ptemp1 > 0)
-        if (fwrite(btemp1, 1, ptemp1, temp1) != ptemp1)
-            error("Disco lleno", NULL);
+        if (fwrite(buf1, 1, ptemp1, temp1) != ptemp1)
+            error("Disk full", NULL);
     fclose(temp1);
     temp1 = NULL;
 }
 
 /*
- ** Escribe datos en el archivo temporal 2
+ ** Write data to temp file 2
  */
-void etemp2(int dato)
+void write_temp2(int data)
 {
-    btemp2[ptemp2++] = dato;
-    if (ptemp2 == TAM_BUF) {
-        if (fwrite(btemp2, 1, ptemp2, temp2) != ptemp2)
-            error("Disco lleno", NULL);
+    buf2[ptemp2++] = data;
+    if (ptemp2 == BUF_SIZE) {
+        if (fwrite(buf2, 1, ptemp2, temp2) != ptemp2)
+            error("Disk full", NULL);
         ptemp2 = 0;
     }
 }
 
 /*
- ** Vacia datos en el archivo temporal 2
+ ** Flush data to temp file 2
  */
-void vtemp2(void)
+void flush_temp2(void)
 {
     if (ptemp2 > 0)
-        if (fwrite(btemp2, 1, ptemp2, temp2) != ptemp2)
-            error("Disco lleno", NULL);
+        if (fwrite(buf2, 1, ptemp2, temp2) != ptemp2)
+            error("Disk full", NULL);
     fclose(temp2);
     temp2 = NULL;
 }
 
 /*
- ** Lee datos del archivo temporal 1
+ ** Read data from temp file 1
  */
-int ltemp1(void)
+int read_temp1(void)
 {
-    if (ptemp1 == TAM_BUF) {
-        fread(btemp1, 1, TAM_BUF, temp1);
+    if (ptemp1 == BUF_SIZE) {
+        fread(buf1, 1, BUF_SIZE, temp1);
         ptemp1 = 0;
     }
-    return btemp1[ptemp1++];
+    return buf1[ptemp1++];
 }
 
 /*
- ** Indica un error
+ ** Report an error
  */
-void error(char *mensaje, char *dato)
+void error(char *msg, char *data)
 {
-    if (dato != NULL)
-        fprintf(stderr, "%s '%s' at line %d\n", mensaje, dato, linea_actual);
+    if (data != NULL)
+        fprintf(stderr, "%s '%s' at line %d\n", msg, data, current_line);
     else
-        fprintf(stderr, "%s at line %d\n", mensaje, linea_actual);
+        fprintf(stderr, "%s at line %d\n", msg, current_line);
 }
 
 

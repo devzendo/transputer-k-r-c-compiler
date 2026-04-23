@@ -78,7 +78,7 @@ Later!
 When there is some, it'll be in the 'docs' directory, when this exists!
 
 
-# Translation details
+# C Compiler Translation details
 Here's a summary of everything that was translated across the 3,018-line tc2.c file:
 
 ## String literals (user-facing messages)
@@ -109,6 +109,23 @@ Local variables throughout: izq→left, der→right, conteo→count, pals→word
 
 ## All comments
 Every block and inline comment translated, including the full function-header doc comments.
+
+# Assembler Translation details
+
+## Structs
+
+struct etiqueta → struct label (fields: siguiente→next, secuencia→sequence, tipo→type, dato→value, nombre→name)
+struct indefinido → struct unresolved (fields: siguiente→next, codigo→opcode, direccion→address, expresion→expression)
+
+## Globals
+
+dispersion[]→hash_table[], ultima_definida→last_defined, paso→pass_num, archivo_entrada→input_fp, ap_proceso→line_ptr, linea_actual→current_line, errores_detectados→errors_detected, disponible→available, pos_ens→asm_pos, pos_global→expr_ptr, primer_etiq→first_label, primer_indef/ultimo_indef→first_unres/last_unres, num_indef→num_unres, nom→name_buf, linea→line_buf, separa/separa2→token/token2, etiq_indef→undef_label, btemp1/btemp2→buf1/buf2, acumula→accum, err→parse_err, preins/oriins→pre_ins/orig_ins, tabla→instr_table
+
+## Functions — all 20+ renamed: ensambla→assemble, calcula_dispersion→hash_name, define_etiqueta→define_label, busca_etiqueta→find_label, libera_memoria→free_memory, separa_componente→next_token, procesa→process, verifica_final→check_end, error_extras→error_extra_chars, ins_op→emit_basic_op, agrega_indefinido→add_unresolved, evalua_expresion→eval_expr, ins_sim→emit_simple, ins_ext→emit_extended, def_pal32→def_word32, def_espacio→def_space, def_equiv→def_equ, compara→match_str, lee_linea→read_line, enlaza→link_pass, repaso→widen_pass, copia→copy_range, etemp1/etemp2→write_temp1/write_temp2, vtemp1/vtemp2→flush_temp1/flush_temp2, ltemp1→read_temp1
+
+## All comments
+
+All error strings and comments translated throughout.
 
 # Acknowledgements
 Óscar Toledo Gutierrez for writing his Transputer project, the original code, and

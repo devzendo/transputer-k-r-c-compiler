@@ -119,7 +119,7 @@ char litq[litabsz];     /* String literal storage */
 int litidx;             /* Index to the next entry in litq */
 
 char macq[macqsize];    /* Macro buffer */
-int macptr;             /* Index into the buffer */
+int macidx;             /* Index into the buffer */
 
 char line[linesize];    /* Parse buffer */
 char mline[linesize];   /* Pre-preprocessed buffer */
@@ -170,7 +170,7 @@ main()
     glbptr = startglb;  /* Clear the global table */
     locptr = startloc;  /* Clear the local table */
     wqptr = wq;         /* Clear the loop queue */
-    macptr =            /* Clear the macro table */
+    macidx =            /* Clear the macro table */
     Zsp =               /* Stack pointer */
     errcnt =            /* No errors */
     eof =               /* EOF not yet reached */
@@ -1314,16 +1314,16 @@ addmac()
   while (ch() == ' ' | ch() == 9)
     gch();
   while (putmac(gch()));
-  if (macptr >= macmax)
+  if (macidx >= macmax)
     error("Macro table full");
 }
 
 putmac(c)
   char c;
 {
-  macq[macptr] = c;
-  if (macptr < macmax)
-    macptr++;
+  macq[macidx] = c;
+  if (macidx < macmax)
+    macidx++;
   return c;
 }
 
@@ -1333,7 +1333,7 @@ findmac(sname)
   int k;
 
   k = 0;
-  while (k < macptr) {
+  while (k < macidx) {
     if (astreq(sname, macq + k, namemax)) {
       while (macq[k++]);
       return k;

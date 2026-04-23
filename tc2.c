@@ -674,7 +674,7 @@ getarg(t, top)                  /* Type = cchar or cint */
       j = variable;
     if (symname(n)) {
       if (match("[")) {         /* Ignore what is between [] */
-	while (inbyte() != ']')
+	while (in_byte() != ']')
 	  if (endst())
 	    break;
 	j = pointer;
@@ -886,7 +886,7 @@ doasm()
 {
   cmode = 0;                    /* Mark assembler mode */
   while (1) {
-    inline();                   /* Get and print lines */
+    in_line();                   /* Get and print lines */
     if (match("#endasm"))
       break;                    /* until... */
     if (eof)
@@ -900,7 +900,7 @@ doasm()
 
 junk()
 {
-  if (an(inbyte()))
+  if (an(in_byte()))
     while (an(ch()))
       gch();
   else
@@ -1140,18 +1140,18 @@ kill()
   line[lptr] = 0;
 }
 
-inbyte()
+in_byte()
 {
   while (ch() == 0) {
     if (eof)
       return 0;
-    inline();
+    in_line();
     preprocess();
   }
   return gch();
 }
 
-inline()
+in_line()
 {
   int k, unit;
 
@@ -1288,7 +1288,7 @@ pre_comment()
   while (((ch() == '*') &
 	  (nch() == '/')) == 0) {
     if (ch() == 0)
-      inline();
+      in_line();
     else
       ++lptr;
     if (eof)
@@ -1517,7 +1517,7 @@ amatch(lit, len)
   if (k = astreq(line + lptr, lit, len)) {
     lptr = lptr + k;
     while (an(ch()))
-      inbyte();
+      in_byte();
     return 1;
   }
   return 0;
@@ -1527,7 +1527,7 @@ blanks()
 {
   while (1) {
     while (ch() == 0) {
-      inline();
+      in_line();
       preprocess();
       if (eof)
 	break;
@@ -1806,11 +1806,11 @@ heir6(lval)
       heir6wrk(2, lval);
     else if (streq(line + lptr, "<") &
             (streq(line + lptr, "<<") == 0)) {
-      inbyte();
+      in_byte();
       heir6wrk(3, lval);
     } else if (streq(line + lptr, ">") &
               (streq(line + lptr, ">>") == 0)) {
-      inbyte();
+      in_byte();
       heir6wrk(4, lval);
     } else
       return 0;
@@ -2950,7 +2950,7 @@ zpop()
   ++Zsp;
 }
 
-/* Llama a la funci¢n especificada */
+/* Llama a la funciï¿½n especificada */
 zcall(sname)
   char *sname;
 {
@@ -2959,7 +2959,7 @@ zcall(sname)
   nl();
 }
 
-/* Retorna de una funci¢n */
+/* Retorna de una funciï¿½n */
 zret()
 {
   ol("ret");

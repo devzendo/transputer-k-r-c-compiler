@@ -126,6 +126,11 @@ char mline[linesize];   /* Pre-preprocessed buffer */
 int lptr, mptr;         /* Respective pointers */
 
 /* Miscellaneous storage */
+char *                  /* FILE * really, but this compiler only understands char * */
+    input,              /* Input file */
+    output,             /* Output file */
+    input2,             /* #include file */
+    saveout;            /* Indicates redirect to console */
 
 int nxtlab,             /* Next available label */
     litlab,             /* Label for the string buffer */
@@ -135,13 +140,9 @@ int nxtlab,             /* Next available label */
     errcnt,             /* Number of errors detected */
     errstop,            /* Whether to stop on error */
     eof,                /* Indicates end of input file */
-    input,              /* Input file */
-    output,             /* Output file */
-    input2,             /* #include file */
     ctext,              /* Whether to include source in output */
     cmode,              /* Whether currently compiling C */
     lastst,             /* Last statement executed */
-    saveout,            /* Indicates redirect to console */
     fnstart,            /* Starting line of the current function */
     lineno,             /* Line number in current file */
     infunc,             /* Whether inside a function */

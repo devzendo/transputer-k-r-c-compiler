@@ -177,8 +177,6 @@ main()
     Zsp =               /* Stack pointer */
     errcnt =            /* No errors */
     eof =               /* EOF not yet reached */
-    input2 =            /* No #include open */
-    saveout =           /* Output not yet redirected */
     ncmp =              /* No open blocks */
     lastst =
     fnstart =           /* Current function started at line 0 */
@@ -187,6 +185,9 @@ main()
     nxtlab =            /* Initialize label numbers */
     quote[1] =
     0;
+    input2 =            /* No #include open */
+    saveout =           /* Output not yet redirected */
+    NULL;
     quote[0] = '"';     /* Create a string with a quote */
     global_pos = 2;
     currfn = NULL;      /* No function yet */

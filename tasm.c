@@ -1,5 +1,5 @@
 /*
-** Ensamblador G10.
+** G10 Assembler.
 **
 ** (c) Copyright 1995 Oscar Toledo G.
 **
@@ -8,209 +8,209 @@
 
 #define NULL     0
 #define EOF     (-1)
-#define TAM_LIN  128
+#define LINE_SIZE  128
 #define NO       0
-#define SI       1
+#define YES      1
 
-#define TAM_BUF  2048
+#define BUF_SIZE   2048
 
-#define TAM_MEM  77777
+#define MEM_SIZE   77777
 
-#define TAM_ETIQ 17  /* 1 byte. 0= Es una direcci¢n. 1= Es un dato. */
-                     /* 4 bytes de dato/direcci¢n. */
-                     /* 4 bytes para la siguiente etiqueta */
-                     /* 4 bytes para el descendiente izquierdo */
-                     /* 4 bytes para el descendiente derecho */
-                     /* x bytes para el nombre (terminado en 0) */
-#define TAM_INDEF 9  /* 1 byte. Indica el codigo de instrucci¢n (0-15) */
-                     /*         16= es para un db, 17= es para un dw. */
-                     /* 4 bytes de direcci¢n donde debe ir */
-                     /* 4 bytes para el siguiente indefinido */
-                     /* x bytes para la expresi¢n (terminada en 0) */
+#define LABEL_SIZE 17  /* 1 byte: 0= address, 1= data value. */
+                     /* 4 num_bytes de data/direcciï¿½n. */
+                     /* 4 bytes for the next label */
+                     /* 4 bytes for the left child */
+                     /* 4 bytes for the right child */
+                     /* x bytes for the name (null-terminated) */
+#define UNRES_SIZE 9  /* 1 byte: instruction opcode (0-15) */
+                     /*         16= db, 17= dw. */
+                     /* 4 bytes of target address */
+                     /* 4 bytes for the next unresolved entry */
+                     /* x bytes for the expression (null-terminated) */
 
-int err;
-int num_arch;
-int archivo, pos_linea;
+int parse_err;
+int num_files;
+int input_fp, line_pos;
 
-char preins[8];
-char oriins[8];
-int acumula;
+char pre_ins[8];
+char orig_ins[8];
+int accum;
 
-int temp1;
-int temp2;
-int fin_de_archivo;
-int linea_actual;
-int disponible;
-int pos_ens;
-char *pos_global;
-char *primer_etiq;
-char *ultima_etiq;
-int num_etiq;
-char *primer_indef;
-char *ultimo_indef;
-int num_indef;
+int temp1_fp;
+int temp2_fp;
+int end_of_file;
+int current_line;
+int available;
+int asm_pos;
+char *expr_ptr;
+char *first_label;
+char *last_label;
+int num_labels;
+char *first_unres;
+char *last_unres;
+int num_unres;
 int ptemp1, ptemp2;
-char nom[15];
-char linea[TAM_LIN];
-char separa[TAM_LIN];
-char separa2[TAM_LIN];
-char etiq_indef[TAM_LIN];
-char btemp1[TAM_BUF];
-char btemp2[TAM_BUF];
-int tabla[528];
-char t[TAM_MEM];
+char name_buf[15];
+char line_buf[LINE_SIZE];
+char token[LINE_SIZE];
+char token2[LINE_SIZE];
+char undef_label[LINE_SIZE];
+char buf1[BUF_SIZE];
+char buf2[BUF_SIZE];
+int instr_table[528];
+char t[MEM_SIZE];
 
 #define TEMPORAL "TEMP1E.$$$"
 
 main() {
   puts("\r\n");
-  puts("Ensamblador G10  16-jun-95  (c) Copyright 1995 Oscar Toledo G.\r\n");
+  puts("G10 Assembler  16-jun-95  (c) Copyright 1995 Oscar Toledo G.\r\n");
   puts("\r\n");
-  inicia1();   /* Las 16 instrucciones b sicas */
-  inicia2();   /* Las 16 operaciones b sicas */
-  inicia3();   /* La mitad del conjunto de instrucciones */
-  inicia4();   /* La otra mitad del conjunto */
-  inicia5();   /* Instrucciones de microcodigo de la FPU */
-  num_arch = 0;
-  disponible = 1;
-  primer_etiq = NULL;
-  ultima_etiq = NULL;
-  num_etiq = 0;
-  primer_indef = NULL;
-  ultimo_indef = NULL;
-  num_indef = 0;
-  pos_ens = 0;
-  temp1 = fopen(TEMPORAL, "w");
-  if(temp1 == NULL) {
-    puts("Error al crear el archivo temporal\r\n\r\n");
-    sale();
+  init_basic_ops();   /* The 16 basic instructions */
+  init_ops();   /* The 16 basic operations */
+  init_instr1();   /* First half of the instruction set */
+  init_instr2();   /* Second half of the instruction set */
+  init_fpu();   /* FPU microcode instructions */
+  num_files = 0;
+  available = 1;
+  first_label = NULL;
+  last_label = NULL;
+  num_labels = 0;
+  first_unres = NULL;
+  last_unres = NULL;
+  num_unres = 0;
+  asm_pos = 0;
+  temp1_fp = fopen(TEMPORAL, "w");
+  if(temp1_fp == NULL) {
+    puts("Error al crear el input_fp temporal\r\n\r\n");
+    quit();
   }
   ptemp1 = 0;
-  temp2 = NULL;
+  temp2_fp = NULL;
   while(1) {
-    puts("Archivo de entrada > ");
-    lee_linea(nom, 15);
-    if(*nom == 0) {
-      vtemp1();
-      if(num_arch == 0) {
-        puts("\r\nEnsamblaje cancelado.\r\n\r\n");
-        sale();
+    puts("Input file > ");
+    read_input(name_buf, 15);
+    if(*name_buf == 0) {
+      flush_temp1();
+      if(num_files == 0) {
+        puts("\r\nAssembly cancelled.\r\n\r\n");
+        quit();
       }
-      linea_actual = 0;
-      puts("Archivo de salida > ");
-      lee_linea(nom, 15);
-      if(*nom == 0) {
-        puts("\r\nEnsamblaje cancelado.\r\n\r\n");
-        sale();
+      current_line = 0;
+      puts("Output file > ");
+      read_input(name_buf, 15);
+      if(*name_buf == 0) {
+        puts("\r\nAssembly cancelled.\r\n\r\n");
+        quit();
       }
       puts("\r\n");
-      enlaza();
+      link_pass();
       puts("\r                          \r");
-      decimal(num_etiq);
-      puts(" etiqueta definidas.\r\n");
-      decimal((disponible + 1023) / 1024);
-      puts(" KB. ocupados.\r\n\r\n");
+      print_decimal(num_labels);
+      puts(" define_label definidas.\r\n");
+      print_decimal((available + 1023) / 1024);
+      puts(" KB used.\r\n\r\n");
       exit(1);
     }
-    archivo = fopen(nom, "r");
-    if(archivo == NULL) {
-      puts("Archivo inexistente.\r\n");
+    input_fp = fopen(name_buf, "r");
+    if(input_fp == NULL) {
+      puts("File not found.\r\n");
       continue;
     }
-    fin_de_archivo = NO;
-    linea_actual = 0;
-    while(!fin_de_archivo)
-      ensambla();
-    fclose(archivo);
-    ++num_arch;
+    end_of_file = NO;
+    current_line = 0;
+    while(!end_of_file)
+      assemble();
+    fclose(input_fp);
+    ++num_files;
   }
 }
 
-sale() {
-  if(temp1 != NULL) fclose(temp1);
-  if(temp2 != NULL) fclose(temp2);
+quit() {
+  if(temp1_fp != NULL) fclose(temp1_fp);
+  if(temp2_fp != NULL) fclose(temp2_fp);
   exit(1);
 }
 
-asigna(bytes) int bytes; {
-  int pos_orig;
-  pos_orig = disponible;
-  disponible = disponible + bytes;
-  if(disponible > TAM_MEM) {
-    if(archivo != NULL) fclose(archivo);
-    puts("\r\nNo hay memoria.\r\n");
-    sale();
+alloc(num_bytes) int num_bytes; {
+  int orig_pos;
+  orig_pos = available;
+  available = available + num_bytes;
+  if(available > MEM_SIZE) {
+    if(input_fp != NULL) fclose(input_fp);
+    puts("\r\nOut of memory.\r\n");
+    quit();
   }
-  return t + pos_orig;
+  return t + orig_pos;
 }
 
-separa_componente() {
+next_token() {
   char *sep;
-  while(linea[pos_linea] == ' ') ++pos_linea;
-  sep = separa;
-  while((linea[pos_linea] != 0) & (linea[pos_linea] != ' ')) {
-    *sep++ = linea[pos_linea++];
+  while(line_buf[line_pos] == ' ') ++line_pos;
+  sep = token;
+  while((line_buf[line_pos] != 0) & (line_buf[line_pos] != ' ')) {
+    *sep++ = line_buf[line_pos++];
   }
   *sep = 0;
-  while(linea[pos_linea] == ' ') ++pos_linea;
+  while(line_buf[line_pos] == ' ') ++line_pos;
 }
 
-ensambla() {
-  int instruccion, etiq;
-  char *final, *ap;
-  obtiene_linea();
-  etiq = NO;
+assemble() {
+  int instr, has_label;
+  char *end_ptr, *ap;
+  read_line();
+  has_label = NO;
   while(1) {
-    separa_componente();
-    if(*separa == 0) break;
-    if(*separa == ';') break;
-    final = separa;
-    while(*final) ++final;
-    if((final != separa) & (*(final-1) == ':')) {
-      *(final-1) = 0;
-      if(isalpha(*separa) | (*separa == '_')) {
-        etiqueta();
-        etiq = SI;
+    next_token();
+    if(*token == 0) break;
+    if(*token == ';') break;
+    end_ptr = token;
+    while(*end_ptr) ++end_ptr;
+    if((end_ptr != token) & (*(end_ptr-1) == ':')) {
+      *(end_ptr-1) = 0;
+      if(isalpha(*token) | (*token == '_')) {
+        define_label();
+        has_label = YES;
       }
-      else error("Etiqueta inv lida");
+      else error("Invalid label");
     }
-    else if(compara("db", separa)) {
+    else if(match_str("db", token)) {
       def_byte();
       break;
     }
-    else if(compara("dw", separa)) {
-      def_pal32();
+    else if(match_str("dw", token)) {
+      def_word32();
       break;
     }
-    else if(compara("ds", separa)) {
-      def_espacio();
+    else if(match_str("ds", token)) {
+      def_space();
       break;
     }
-    else if(compara("equ", separa)) {
-      if(etiq) def_equiv();
-      else error("El equ debe ir con una etiqueta");
+    else if(match_str("equ", token)) {
+      if(has_label) def_equ();
+      else error("El equ debe ir con una define_label");
       break;
     }
     else {
-      instruccion = 0;
-      while(instruccion < 528) {
-        ap = tabla[instruccion++];
+      instr = 0;
+      while(instr < 528) {
+        ap = instr_table[instr++];
         if(*ap == '?') continue;
-        if(compara(ap, separa)) {
-          --instruccion;
-          if(instruccion < 16) ins_op(instruccion);
-          else if(instruccion < 272) ins_sim(instruccion - 16);
-          else if(instruccion < 528) ins_ext(instruccion - 272);
+        if(match_str(ap, token)) {
+          --instr;
+          if(instr < 16) emit_basic_op(instr);
+          else if(instr < 272) emit_simple(instr - 16);
+          else if(instr < 528) emit_extended(instr - 272);
           break;
         }
       }
-      if(instruccion == 528) {
-        error("Instrucci¢n indefinida");
+      if(instr == 528) {
+        error("Undefined instruction");
       }
       else break;
     }
   }
-  if(fin_de_archivo) return;
+  if(end_of_file) return;
 }
 
 strlen(cad) char *cad; {
@@ -237,130 +237,130 @@ strcmp(ori, des) char *ori, *des; {
   }
 }
 
-etiqueta() {
-  char *nueva_etiq;
-  char *pos, *pos1;
-  int u, cuenta, valor;
-  pos = primer_etiq;
+define_label() {
+  char *new_label;
+  char *addr, *pos1;
+  int u, count, val;
+  addr = first_label;
   pos1 = NULL;
-  while(pos != NULL) {
-    if((valor = strcmp(separa, pos + 17)) == 0) {
-      error("Etiqueta redefinida");
+  while(addr != NULL) {
+    if((val = strcmp(token, addr + 17)) == 0) {
+      error("Label redefined");
       return;
     }
-    if(valor == -1) {
-      pos1 = pos + 9;
-      pos = (*(pos + 9)) | (*(pos + 10) << 8) |
-            (*(pos + 11) << 16) | (*(pos + 12) << 24);
-    } else if(valor == 1) {
-      pos1 = pos + 13;
-      pos = (*(pos + 13)) | (*(pos + 14) << 8) |
-            (*(pos + 15) << 16) | (*(pos + 16) << 24);
+    if(val == -1) {
+      pos1 = addr + 9;
+      addr = (*(addr + 9)) | (*(addr + 10) << 8) |
+            (*(addr + 11) << 16) | (*(addr + 12) << 24);
+    } else if(val == 1) {
+      pos1 = addr + 13;
+      addr = (*(addr + 13)) | (*(addr + 14) << 8) |
+            (*(addr + 15) << 16) | (*(addr + 16) << 24);
     }
   }
-  u = pos = nueva_etiq = asigna(TAM_ETIQ + strlen(separa) + 1);
+  u = addr = new_label = alloc(LABEL_SIZE + strlen(token) + 1);
   if(pos1 != NULL) {
     *pos1 = u;
     *(pos1+1) = u >> 8;
     *(pos1+2) = u >> 16;
     *(pos1+3) = u >> 24;
   }
-  *pos++ = 0;
-  *pos++ = pos_ens;
-  *pos++ = pos_ens >> 8;
-  *pos++ = pos_ens >> 16;
-  *pos++ = pos_ens >> 24;
-  cuenta = 0;
-  while(cuenta++ < 12)
-    *pos++ = 0;
-  pos1 = separa;
-  while(*pos++ = *pos1++);
-  if(ultima_etiq != NULL) {
-    *(ultima_etiq + 5) = u;
-    *(ultima_etiq + 6) = u >> 8;
-    *(ultima_etiq + 7) = u >> 16;
-    *(ultima_etiq + 8) = u >> 24;
+  *addr++ = 0;
+  *addr++ = asm_pos;
+  *addr++ = asm_pos >> 8;
+  *addr++ = asm_pos >> 16;
+  *addr++ = asm_pos >> 24;
+  count = 0;
+  while(count++ < 12)
+    *addr++ = 0;
+  pos1 = token;
+  while(*addr++ = *pos1++);
+  if(last_label != NULL) {
+    *(last_label + 5) = u;
+    *(last_label + 6) = u >> 8;
+    *(last_label + 7) = u >> 16;
+    *(last_label + 8) = u >> 24;
   }
-  if(primer_etiq == NULL) primer_etiq = nueva_etiq;
-  ultima_etiq = nueva_etiq;
-  ++num_etiq;
+  if(first_label == NULL) first_label = new_label;
+  last_label = new_label;
+  ++num_labels;
 }
 
-busca_etiq(nombre) char *nombre; {
-  char *pos;
-  int valor;
-  pos = primer_etiq;
-  while(pos != NULL) {
-    if((valor = strcmp(nombre, pos + 17)) == 0) return pos;
-    if(valor == -1) {
-      pos = (*(pos + 9)) | (*(pos + 10) << 8) |
-            (*(pos + 11) << 16) | (*(pos + 12) << 24);
-    } else if(valor == 1) {
-      pos = (*(pos + 13)) | (*(pos + 14) << 8) |
-            (*(pos + 15) << 16) | (*(pos + 16) << 24);
+find_label(label_name) char *label_name; {
+  char *addr;
+  int val;
+  addr = first_label;
+  while(addr != NULL) {
+    if((val = strcmp(label_name, addr + 17)) == 0) return addr;
+    if(val == -1) {
+      addr = (*(addr + 9)) | (*(addr + 10) << 8) |
+            (*(addr + 11) << 16) | (*(addr + 12) << 24);
+    } else if(val == 1) {
+      addr = (*(addr + 13)) | (*(addr + 14) << 8) |
+            (*(addr + 15) << 16) | (*(addr + 16) << 24);
     }
   }
   return NULL;
 }
 
-ins_op(ins) int ins; {
-  int valor;
-  int arregla, salto;
-  separa_componente();
-  err = 0;
-  pos_global = separa;
-  valor = evalua_expresion();
-  if(err) {
-    ag_indef(ins);
-    etemp1(ins << 4);
-    ++pos_ens;
+emit_basic_op(op) int op; {
+  int val;
+  int adjust, jump_dist;
+  next_token();
+  parse_err = 0;
+  expr_ptr = token;
+  val = eval_expr();
+  if(parse_err) {
+    add_unresolved(op);
+    write_temp1(op << 4);
+    ++asm_pos;
     return;
   }
-  if((ins == 0) | (ins == 9) | (ins == 10)) {
-    ag_indef(ins);
-    arregla = 1;
+  if((op == 0) | (op == 9) | (op == 10)) {
+    add_unresolved(op);
+    adjust = 1;
     while(1) {
-      acumula = 0;
-      gen_ins(ins, salto = (valor - (pos_ens + arregla)));
-      if(pos_ens + acumula + salto == valor) break;
-      ++arregla;
+      accum = 0;
+      gen_ins(op, jump_dist = (val - (asm_pos + adjust)));
+      if(asm_pos + accum + jump_dist == val) break;
+      ++adjust;
     }
   } else {
-    acumula = 0;
-    gen_ins(ins, valor);
+    accum = 0;
+    gen_ins(op, val);
   }
-  valor = 0;
-  while(valor < acumula) {
-    etemp1(preins[valor++]);
-    ++pos_ens;
+  val = 0;
+  while(val < accum) {
+    write_temp1(pre_ins[val++]);
+    ++asm_pos;
   }
 }
 
-ag_indef(clave) int clave; {
-  char *nuevo_indef;
-  char *pos, *pos1;
+add_unresolved(key) int key; {
+  char *new_unres;
+  char *addr, *pos1;
   int u;
-  u = pos = nuevo_indef = asigna(TAM_INDEF + strlen(separa) + 1);
-  *pos++ = clave;
-  *pos++ = pos_ens;
-  *pos++ = pos_ens >> 8;
-  *pos++ = pos_ens >> 16;
-  *pos++ = pos_ens >> 24;
-  *pos++ = 0;
-  *pos++ = 0;
-  *pos++ = 0;
-  *pos++ = 0;
-  pos1 = separa;
-  while(*pos++ = *pos1++) ;
-  if(ultimo_indef != NULL) {
-    *(ultimo_indef + 5) = u;
-    *(ultimo_indef + 6) = u >> 8;
-    *(ultimo_indef + 7) = u >> 16;
-    *(ultimo_indef + 8) = u >> 24;
+  u = addr = new_unres = alloc(UNRES_SIZE + strlen(token) + 1);
+  *addr++ = key;
+  *addr++ = asm_pos;
+  *addr++ = asm_pos >> 8;
+  *addr++ = asm_pos >> 16;
+  *addr++ = asm_pos >> 24;
+  *addr++ = 0;
+  *addr++ = 0;
+  *addr++ = 0;
+  *addr++ = 0;
+  pos1 = token;
+  while(*addr++ = *pos1++) ;
+  if(last_unres != NULL) {
+    *(last_unres + 5) = u;
+    *(last_unres + 6) = u >> 8;
+    *(last_unres + 7) = u >> 16;
+    *(last_unres + 8) = u >> 24;
   }
-  if(primer_indef == NULL) primer_indef = nuevo_indef;
-  ultimo_indef = nuevo_indef;
-  ++num_indef;
+  if(first_unres == NULL) first_unres = new_unres;
+  last_unres = new_unres;
+  ++num_unres;
 }
 
 isdigit(c) char c; {
@@ -372,84 +372,84 @@ isalpha(c) char c; {
          ((c >= 'a') & (c <= 'z')));
 }
 
-evalua_expresion() {
-  int valor1;
-  valor1 = eval1();
-  while((*pos_global == '+') | (*pos_global == '-')) {
-    if(*pos_global == '+') {
-      ++pos_global;
-      valor1 = valor1 + eval1();
+eval_expr() {
+  int val1;
+  val1 = eval1();
+  while((*expr_ptr == '+') | (*expr_ptr == '-')) {
+    if(*expr_ptr == '+') {
+      ++expr_ptr;
+      val1 = val1 + eval1();
     } else {
-      ++pos_global;
-      valor1 = valor1 - eval1();
+      ++expr_ptr;
+      val1 = val1 - eval1();
     }
   }
-  return valor1;
+  return val1;
 }
 
 eval1() {
-  if(*pos_global == '+') ++pos_global;
-  else if(*pos_global == '-') {
-    ++pos_global;
+  if(*expr_ptr == '+') ++expr_ptr;
+  else if(*expr_ptr == '-') {
+    ++expr_ptr;
     return -eval2();
   }
   return eval2();
 }
 
 eval2() {
-  int valor1;
-  valor1 = eval3();
-  while((*pos_global == '*') |
-        (*pos_global == '/') |
-        (*pos_global == '%')) {
-    if(*pos_global == '*') {
-      ++pos_global;
-      valor1 = valor1 * eval3();
-    } else if(*pos_global == '/') {
-      ++pos_global;
-      valor1 = valor1 / eval3();
+  int val1;
+  val1 = eval3();
+  while((*expr_ptr == '*') |
+        (*expr_ptr == '/') |
+        (*expr_ptr == '%')) {
+    if(*expr_ptr == '*') {
+      ++expr_ptr;
+      val1 = val1 * eval3();
+    } else if(*expr_ptr == '/') {
+      ++expr_ptr;
+      val1 = val1 / eval3();
     } else {
-      ++pos_global;
-      valor1 = valor1 % eval3();
+      ++expr_ptr;
+      val1 = val1 % eval3();
     }
   }
-  return valor1;
+  return val1;
 }
 
 eval3() {
   char *ap;
-  int valor;
-  if(*pos_global == '(') {
-    ++pos_global;
-    valor = evalua_expresion();
-    if(*pos_global != ')')
-      error("Falta parentesis derecho");
-    else ++pos_global;
-    return valor;
-  } else if(isdigit(*pos_global)) {
-    if((*(pos_global + 1) == 'X') |
-       (*(pos_global + 1) == 'x'))
+  int val;
+  if(*expr_ptr == '(') {
+    ++expr_ptr;
+    val = eval_expr();
+    if(*expr_ptr != ')')
+      error("Missing closing parenthesis");
+    else ++expr_ptr;
+    return val;
+  } else if(isdigit(*expr_ptr)) {
+    if((*(expr_ptr + 1) == 'X') |
+       (*(expr_ptr + 1) == 'x'))
       return eval_hex();
     else return eval_dec();
   }
-  else if(isalpha(*pos_global) | (*pos_global == '_')) {
-    ap = separa2;
-    while((*pos_global == '_') | isalpha(*pos_global) |
-          isdigit(*pos_global)) {
-      *ap++ = *pos_global++;
+  else if(isalpha(*expr_ptr) | (*expr_ptr == '_')) {
+    ap = token2;
+    while((*expr_ptr == '_') | isalpha(*expr_ptr) |
+          isdigit(*expr_ptr)) {
+      *ap++ = *expr_ptr++;
     }
     *ap = 0;
-    if((ap = busca_etiq(separa2)) != NULL) {
-      valor = *(ap+1) | (*(ap+2) << 8) | (*(ap+3) << 16) | (*(ap+4) << 24);
-      return valor;
+    if((ap = find_label(token2)) != NULL) {
+      val = *(ap+1) | (*(ap+2) << 8) | (*(ap+3) << 16) | (*(ap+4) << 24);
+      return val;
     }
     else {
-      strcpy(etiq_indef, separa2);
-      err = 1;
+      strcpy(undef_label, token2);
+      parse_err = 1;
       return 0;
     }
   }
-  else error("error de sintaxis");
+  else error("Syntax error");
 }
 
 isxdigit(c) int c; {
@@ -460,374 +460,374 @@ isxdigit(c) int c; {
 
 eval_hex() {
   int c;
-  int valor;
-  valor = 0;
-  pos_global = pos_global + 2;
-  while(isxdigit(*pos_global)) {
-    c = toupper(*pos_global++) - '0';
+  int val;
+  val = 0;
+  expr_ptr = expr_ptr + 2;
+  while(isxdigit(*expr_ptr)) {
+    c = toupper(*expr_ptr++) - '0';
     if(c > 9) c = c - 7;
-    valor = (valor << 4) | c;
+    val = (val << 4) | c;
   }
-  return valor;
+  return val;
 }
 
 eval_dec() {
   int c;
-  int valor;
-  valor = 0;
-  while(isdigit(*pos_global)) {
-    c = *pos_global++ - '0';
-    valor = valor * 10 + c;
+  int val;
+  val = 0;
+  while(isdigit(*expr_ptr)) {
+    c = *expr_ptr++ - '0';
+    val = val * 10 + c;
   }
-  return valor;
+  return val;
 }
 
-gen_ins(oper, valor) int oper; int valor; {
-  if(valor < 0) gen_ins(6, ~valor >> 4);
-  else if(valor >= 16) gen_ins(2, valor >> 4);
-  preins[acumula++] = (oper << 4) | (valor & 15);
+gen_ins(oper, val) int oper; int val; {
+  if(val < 0) gen_ins(6, ~val >> 4);
+  else if(val >= 16) gen_ins(2, val >> 4);
+  pre_ins[accum++] = (oper << 4) | (val & 15);
 }
 
-ins_sim(ins) int ins; {
-  if(ins > 15) {
-    etemp1(0x20 + (ins >> 4));
-    ++pos_ens;
+emit_simple(op) int op; {
+  if(op > 15) {
+    write_temp1(0x20 + (op >> 4));
+    ++asm_pos;
   }
-  etemp1(0xf0 + (ins & 15));
-  ++pos_ens;
+  write_temp1(0xf0 + (op & 15));
+  ++asm_pos;
 }
 
-ins_ext(ins) int ins; {
-  if(ins > 15) {
-    etemp1(0x20 + (ins >> 4));
-    ++pos_ens;
+emit_extended(op) int op; {
+  if(op > 15) {
+    write_temp1(0x20 + (op >> 4));
+    ++asm_pos;
   }
-  etemp1(0x40 + (ins & 15));
-  ++pos_ens;
-  etemp1(0x2a);
-  ++pos_ens;
-  etemp1(0xfb);
-  ++pos_ens;
+  write_temp1(0x40 + (op & 15));
+  ++asm_pos;
+  write_temp1(0x2a);
+  ++asm_pos;
+  write_temp1(0xfb);
+  ++asm_pos;
 }
 
 def_byte() {
-  int valor;
-  separa_componente();
-  pos_global = separa;
+  int val;
+  next_token();
+  expr_ptr = token;
   while(1) {
-    err = 0;
-    valor = evalua_expresion();
-    if(err) ag_indef(16);
-    etemp1(valor & 255);
-    ++pos_ens;
-    if(*pos_global != ',') {
-      if(*pos_global)
-        error("Falta una coma");
+    parse_err = 0;
+    val = eval_expr();
+    if(parse_err) add_unresolved(16);
+    write_temp1(val & 255);
+    ++asm_pos;
+    if(*expr_ptr != ',') {
+      if(*expr_ptr)
+        error("Missing comma");
       return;
     }
-    ++pos_global;
+    ++expr_ptr;
   }
 }
 
-def_pal32() {
-  int valor;
-  separa_componente();
-  pos_global = separa;
+def_word32() {
+  int val;
+  next_token();
+  expr_ptr = token;
   while(1) {
-    err = 0;
-    valor = evalua_expresion();
-    if(err) ag_indef(17);
-    etemp1(valor & 255);
-    ++pos_ens;
-    etemp1((valor >> 8) & 255);
-    ++pos_ens;
-    etemp1((valor >> 16) & 255);
-    ++pos_ens;
-    etemp1((valor >> 24) & 255);
-    ++pos_ens;
-    if(*pos_global != ',') {
-      if(*pos_global)
-        error("Falta una coma");
+    parse_err = 0;
+    val = eval_expr();
+    if(parse_err) add_unresolved(17);
+    write_temp1(val & 255);
+    ++asm_pos;
+    write_temp1((val >> 8) & 255);
+    ++asm_pos;
+    write_temp1((val >> 16) & 255);
+    ++asm_pos;
+    write_temp1((val >> 24) & 255);
+    ++asm_pos;
+    if(*expr_ptr != ',') {
+      if(*expr_ptr)
+        error("Missing comma");
       return;
     }
-    ++pos_global;
+    ++expr_ptr;
   }
 }
 
-def_espacio() {
-  int valor;
-  separa_componente();
-  pos_global = separa;
-  err = 0;
-  valor = evalua_expresion();
-  if(err) {
-    error("Se requiere un valor definido");
+def_space() {
+  int val;
+  next_token();
+  expr_ptr = token;
+  parse_err = 0;
+  val = eval_expr();
+  if(parse_err) {
+    error("Se requiere un val definido");
     return;
   }
-  while(valor--) {
-    etemp1(0);
-    ++pos_ens;
+  while(val--) {
+    write_temp1(0);
+    ++asm_pos;
   }
 }
 
-def_equiv() {
-  int valor;
-  separa_componente();
-  pos_global = separa;
-  err = 0;
-  valor = evalua_expresion();
-  if(err) {
-    error("Se requiere un valor definido");
+def_equ() {
+  int val;
+  next_token();
+  expr_ptr = token;
+  parse_err = 0;
+  val = eval_expr();
+  if(parse_err) {
+    error("Se requiere un val definido");
     return;
   }
-  if(ultima_etiq == NULL) {
-    error("Error interno");
+  if(last_label == NULL) {
+    error("Internal error");
     return;
   }
-  *ultima_etiq = 1;
-  *(ultima_etiq+1) = valor;
-  *(ultima_etiq+2) = valor >> 8;
-  *(ultima_etiq+3) = valor >> 16;
-  *(ultima_etiq+4) = valor >> 24;
+  *last_label = 1;
+  *(last_label+1) = val;
+  *(last_label+2) = val >> 8;
+  *(last_label+3) = val >> 16;
+  *(last_label+4) = val >> 24;
 }
 
-compara(ins, separa) char *ins, *separa; {
-  while(*ins == *separa++) {
-    if(*ins++ == 0) return 1;
+match_str(op, token) char *op, *token; {
+  while(*op == *token++) {
+    if(*op++ == 0) return 1;
   }
   return 0;
 }
 
-error(info) char *info; {
-  puts(info);
-  if(linea_actual) {
-    puts(" en la l¡nea ");
-    decimal(linea_actual);
+error(msg) char *msg; {
+  puts(msg);
+  if(current_line) {
+    puts(" at line ");
+    print_decimal(current_line);
   }
   puts("\r\n");
 }
 
-obtiene_linea() {
-  int conteo, car;
-  conteo = 0;
+read_line() {
+  int count, ch;
+  count = 0;
   while(1) {
-    car = fgetc(archivo);
-    if(car == EOF) {
-      fin_de_archivo = SI;
+    ch = fgetc(input_fp);
+    if(ch == EOF) {
+      end_of_file = YES;
       break;
     }
-    if(car == '\r') continue;
-    if(car == '\n') break;
-    if(car == '\t') car = ' ';
-    if(conteo != TAM_LIN - 1)
-      linea[conteo++] = car;
+    if(ch == '\r') continue;
+    if(ch == '\n') break;
+    if(ch == '\t') ch = ' ';
+    if(count != LINE_SIZE - 1)
+      line_buf[count++] = ch;
   }
-  linea[conteo] = 0;
-  ++linea_actual;
-  pos_linea = 0;
+  line_buf[count] = 0;
+  ++current_line;
+  line_pos = 0;
 }
 
-int algo;
+int changed;
 
-enlaza() {
+link_pass() {
   while(1) {
-    temp1 = fopen(TEMPORAL, "r");
-    ptemp1 = TAM_BUF;
-    temp2 = fopen(nom, "w");
+    temp1_fp = fopen(TEMPORAL, "r");
+    ptemp1 = BUF_SIZE;
+    temp2_fp = fopen(name_buf, "w");
     ptemp2 = 0;
-    if(temp2 == NULL) {
-      error("Error de acceso al disco");
-      sale();
+    if(temp2_fp == NULL) {
+      error("Disk access error");
+      quit();
     }
-    algo = NO;
-    paso();
-    vtemp2();
-    fclose(temp1);
-    temp1 = NULL;
-    if(!algo) break;
-    temp1 = fopen(nom, "r");
-    ptemp1 = TAM_BUF;
-    temp2 = fopen(TEMPORAL, "w");
+    changed = NO;
+    widen_pass();
+    flush_temp2();
+    fclose(temp1_fp);
+    temp1_fp = NULL;
+    if(!changed) break;
+    temp1_fp = fopen(name_buf, "r");
+    ptemp1 = BUF_SIZE;
+    temp2_fp = fopen(TEMPORAL, "w");
     ptemp2 = 0;
-    if(temp2 == NULL) {
-      error("Error de acceso al disco");
-      sale();
+    if(temp2_fp == NULL) {
+      error("Disk access error");
+      quit();
     }
-    algo = NO;
-    paso();
-    vtemp2();
-    fclose(temp1);
-    temp1 = NULL;
+    changed = NO;
+    widen_pass();
+    flush_temp2();
+    fclose(temp1_fp);
+    temp1_fp = NULL;
 /*
-    if(!algo) {
-      unlink(nom);
-      rename(TEMPORAL, nom);
+    if(!changed) {
+      unlink(name_buf);
+      rename(TEMPORAL, name_buf);
       break;
     }
 */
   }
 }
 
-paso() {
-  char *lista, *lista2;
-  int inicio;
-  int ultimo;
-  int pos;
-  int valor, byte;
-  int acu, ins;
-  int arregla, salto;
-  int cuantos;
+widen_pass() {
+  char *list, *list2;
+  int start;
+  int last;
+  int addr;
+  int val, byte_val;
+  int orig_len, op;
+  int adjust, jump_dist;
+  int delta;
   int a;
 
-  ultimo = pos_ens;
-  pos_ens = 0;
+  last = asm_pos;
+  asm_pos = 0;
 
-  cuantos = 0;
+  delta = 0;
 
-  inicio = 0;
+  start = 0;
 
-  lista = primer_indef;
+  list = first_unres;
 
   a = 0;
-  while(lista != NULL) {
-    pos = *(lista + 1) | (*(lista + 2) << 8) |
-          (*(lista + 3) << 16) | (*(lista + 4) << 24);
-    copia(inicio, pos);
+  while(list != NULL) {
+    addr = *(list + 1) | (*(list + 2) << 8) |
+          (*(list + 3) << 16) | (*(list + 4) << 24);
+    copy_range(start, addr);
 
-    ins = *lista;
+    op = *list;
 
-    if(ins == 16) {
-      byte = ltemp1();
-      inicio = pos + 1;
-    } else if(ins == 17) {
-      byte = ltemp1();
-      byte = ltemp1();
-      byte = ltemp1();
-      byte = ltemp1();
-      inicio = pos + 4;
+    if(op == 16) {
+      byte_val = read_temp1();
+      start = addr + 1;
+    } else if(op == 17) {
+      byte_val = read_temp1();
+      byte_val = read_temp1();
+      byte_val = read_temp1();
+      byte_val = read_temp1();
+      start = addr + 4;
     } else {
-      acu = 0;
+      orig_len = 0;
       while(1) {
-        oriins[acu++] = byte = ltemp1();
-        if((byte & 0xf0) == 0x20) continue;
-        if((byte & 0xf0) == 0x60) continue;
+        orig_ins[orig_len++] = byte_val = read_temp1();
+        if((byte_val & 0xf0) == 0x20) continue;
+        if((byte_val & 0xf0) == 0x60) continue;
         break;
       }
-      inicio = pos + acu;
+      start = addr + orig_len;
     }
 
-    *(lista + 1) = pos_ens;
-    *(lista + 2) = pos_ens >> 8;
-    *(lista + 3) = pos_ens >> 16;
-    *(lista + 4) = pos_ens >> 24;
+    *(list + 1) = asm_pos;
+    *(list + 2) = asm_pos >> 8;
+    *(list + 3) = asm_pos >> 16;
+    *(list + 4) = asm_pos >> 24;
 
-    err = 0;
-    pos_global = lista + 9;
-    valor = evalua_expresion();
-    if(err) {
-      strcpy(separa2, "Etiqueta indefinida ");
-      strcat(separa2, etiq_indef);
-      error(separa2);
-      valor = 0;
+    parse_err = 0;
+    expr_ptr = list + 9;
+    val = eval_expr();
+    if(parse_err) {
+      strcpy(token2, "Undefined label ");
+      strcat(token2, undef_label);
+      error(token2);
+      val = 0;
     }
 
-    if(ins == 16) {
-      etemp2(valor);
-      ++pos_ens;
-    } else if(ins == 17) {
-      etemp2(valor);
-      ++pos_ens;
-      etemp2(valor >> 8);
-      ++pos_ens;
-      etemp2(valor >> 16);
-      ++pos_ens;
-      etemp2(valor >> 24);
-      ++pos_ens;
-    } else if((ins == 0) | (ins == 9) | (ins == 10)) {
-      acumula = 0;
-      gen_ins(ins, valor - (pos_ens + acu));
+    if(op == 16) {
+      write_temp2(val);
+      ++asm_pos;
+    } else if(op == 17) {
+      write_temp2(val);
+      ++asm_pos;
+      write_temp2(val >> 8);
+      ++asm_pos;
+      write_temp2(val >> 16);
+      ++asm_pos;
+      write_temp2(val >> 24);
+      ++asm_pos;
+    } else if((op == 0) | (op == 9) | (op == 10)) {
+      accum = 0;
+      gen_ins(op, val - (asm_pos + orig_len));
     } else {
-      acumula = 0;
-      gen_ins(ins, valor);
+      accum = 0;
+      gen_ins(op, val);
     }
-    if((ins != 16) & (ins != 17)) {
-      valor = 0;
-      while(valor < acumula) {
-        etemp2(preins[valor++]);
-        ++pos_ens;
+    if((op != 16) & (op != 17)) {
+      val = 0;
+      while(val < accum) {
+        write_temp2(pre_ins[val++]);
+        ++asm_pos;
       }
-      if(acumula != acu) {
-        algo = SI;
-        lista2 = primer_etiq;
-        while(lista2 != NULL) {
-          if(*lista2 == 0) {
-            valor = *(lista2+1) | (*(lista2+2) << 8) |
-                    (*(lista2+3) << 16) | (*(lista2+4) << 24);
-            if(valor >= inicio + cuantos)
-              valor = valor + (acumula - acu);
-            *(lista2+1) = valor;
-            *(lista2+2) = valor >> 8;
-            *(lista2+3) = valor >> 16;
-            *(lista2+4) = valor >> 24;
+      if(accum != orig_len) {
+        changed = YES;
+        list2 = first_label;
+        while(list2 != NULL) {
+          if(*list2 == 0) {
+            val = *(list2+1) | (*(list2+2) << 8) |
+                    (*(list2+3) << 16) | (*(list2+4) << 24);
+            if(val >= start + delta)
+              val = val + (accum - orig_len);
+            *(list2+1) = val;
+            *(list2+2) = val >> 8;
+            *(list2+3) = val >> 16;
+            *(list2+4) = val >> 24;
           }
-          lista2 = *(lista2+5) | (*(lista2+6) << 8) |
-                  (*(lista2+7) << 16) | (*(lista2+8) << 24);
+          list2 = *(list2+5) | (*(list2+6) << 8) |
+                  (*(list2+7) << 16) | (*(list2+8) << 24);
         }
-        cuantos = cuantos + (acumula - acu);
+        delta = delta + (accum - orig_len);
       }
     }
 
-    lista = *(lista + 5) | (*(lista + 6) << 8) |
-           (*(lista + 7) << 16) | (*(lista + 8) << 24);
-    decimal(++a * 100 / num_indef);
+    list = *(list + 5) | (*(list + 6) << 8) |
+           (*(list + 7) << 16) | (*(list + 8) << 24);
+    print_decimal(++a * 100 / num_unres);
     puts("%  \r");
   }
 
-  copia(inicio, ultimo);
+  copy_range(start, last);
 }
 
-copia(inicio, final) int inicio, final; {
-  while(inicio++ < final) {
-    etemp2(ltemp1());
-    ++pos_ens;
+copy_range(start, end_ptr) int start, end_ptr; {
+  while(start++ < end_ptr) {
+    write_temp2(read_temp1());
+    ++asm_pos;
   }
 }
 
-toupper(car) int car; {
-  if((car >= 'a') & (car <= 'z')) return car - 32;
-  else return car;
+toupper(ch) int ch; {
+  if((ch >= 'a') & (ch <= 'z')) return ch - 32;
+  else return ch;
 }
 
-lee_linea(pos, tam) char *pos; int tam; {
-  char *ahora;
-  int car;
-  ahora = pos;
+read_input(addr, size) char *addr; int size; {
+  char *cur;
+  int ch;
+  cur = addr;
   while(1) {
-    car = getchar();
-    if(car == 8) {
-      if(ahora == pos) continue;
+    ch = getchar();
+    if(ch == 8) {
+      if(cur == addr) continue;
       putchar(8);
-      --ahora;
+      --cur;
       continue;
-    } else if(car == 13) {
+    } else if(ch == 13) {
       puts("\r\n");
-      *ahora = 0;
+      *cur = 0;
       return;
     } else {
-      if(ahora == pos + tam - 1) continue;
-      putchar(car);
-      *ahora++ = car;
+      if(cur == addr + size - 1) continue;
+      putchar(ch);
+      *cur++ = ch;
     }
   }
 }
 
-etemp1(dato) int dato; {
-  btemp1[ptemp1++] = dato;
-  if(ptemp1 == TAM_BUF) {
+write_temp1(data) int data; {
+  buf1[ptemp1++] = data;
+  if(ptemp1 == BUF_SIZE) {
     ptemp1 = 0;
-    while(ptemp1 < TAM_BUF) {
-      if(fputc(btemp1[ptemp1++], temp1) == EOF) {
-        error("Disco lleno");
+    while(ptemp1 < BUF_SIZE) {
+      if(fputc(buf1[ptemp1++], temp1_fp) == EOF) {
+        error("Disk full");
         break;
       }
     }
@@ -835,26 +835,26 @@ etemp1(dato) int dato; {
   }
 }
 
-vtemp1() {
-  int conteo;
-  conteo = 0;
-  while(conteo < ptemp1) {
-    if(fputc(btemp1[conteo++], temp1) == EOF) {
-      error("Disco lleno");
+flush_temp1() {
+  int count;
+  count = 0;
+  while(count < ptemp1) {
+    if(fputc(buf1[count++], temp1_fp) == EOF) {
+      error("Disk full");
       break;
     }
   }
-  fclose(temp1);
-  temp1 = NULL;
+  fclose(temp1_fp);
+  temp1_fp = NULL;
 }
 
-etemp2(dato) int dato; {
-  btemp2[ptemp2++] = dato;
-  if(ptemp2 == TAM_BUF) {
+write_temp2(data) int data; {
+  buf2[ptemp2++] = data;
+  if(ptemp2 == BUF_SIZE) {
     ptemp2 = 0;
-    while(ptemp2 < TAM_BUF) {
-      if(fputc(btemp2[ptemp2++], temp2) == EOF) {
-        error("Disco lleno");
+    while(ptemp2 < BUF_SIZE) {
+      if(fputc(buf2[ptemp2++], temp2_fp) == EOF) {
+        error("Disk full");
         break;
       }
     }
@@ -862,612 +862,612 @@ etemp2(dato) int dato; {
   }
 }
 
-vtemp2() {
-  int conteo;
-  conteo = 0;
-  while(conteo < ptemp2) {
-    if(fputc(btemp2[conteo++], temp2) == EOF) {
-      error("Disco lleno");
+flush_temp2() {
+  int count;
+  count = 0;
+  while(count < ptemp2) {
+    if(fputc(buf2[count++], temp2_fp) == EOF) {
+      error("Disk full");
       break;
     }
   }
-  fclose(temp2);
-  temp2 = NULL;
+  fclose(temp2_fp);
+  temp2_fp = NULL;
 }
 
-ltemp1() {
-  if(ptemp1 == TAM_BUF) {
+read_temp1() {
+  if(ptemp1 == BUF_SIZE) {
     ptemp1 = 0;
-    while(ptemp1 < TAM_BUF)
-      btemp1[ptemp1++] = fgetc(temp1);
+    while(ptemp1 < BUF_SIZE)
+      buf1[ptemp1++] = fgetc(temp1_fp);
     ptemp1 = 0;
   }
-  return btemp1[ptemp1++];
+  return buf1[ptemp1++];
 }
 
-decimal(numero)
-  int numero;
+print_decimal(num)
+  int num;
 {
-  if (numero < 0) {
+  if (num < 0) {
     putchar('-');
-    if (numero < -9)
-      decimal(-(numero / 10));
-    putchar(-(numero % 10) + '0');
+    if (num < -9)
+      print_decimal(-(num / 10));
+    putchar(-(num % 10) + '0');
   } else {
-    if (numero > 9)
-      decimal(numero / 10);
-    putchar((numero % 10) + '0');
+    if (num > 9)
+      print_decimal(num / 10);
+    putchar((num % 10) + '0');
   }
 }
 
-inicia1() {
-  tabla[0] = "j";
-  tabla[1] = "ldlp";
-  tabla[2] = "pfix";
-  tabla[3] = "ldnl";
-  tabla[4] = "ldc";
-  tabla[5] = "ldnlp";
-  tabla[6] = "nfix";
-  tabla[7] = "ldl";
-  tabla[8] = "adc";
-  tabla[9] = "call";
-  tabla[10] = "cj";
-  tabla[11] = "ajw";
-  tabla[12] = "eqc";
-  tabla[13] = "stl";
-  tabla[14] = "stnl";
-  tabla[15] = "opr";
+init_basic_ops() {
+  instr_table[0] = "j";
+  instr_table[1] = "ldlp";
+  instr_table[2] = "pfix";
+  instr_table[3] = "ldnl";
+  instr_table[4] = "ldc";
+  instr_table[5] = "ldnlp";
+  instr_table[6] = "nfix";
+  instr_table[7] = "ldl";
+  instr_table[8] = "adc";
+  instr_table[9] = "call";
+  instr_table[10] = "cj";
+  instr_table[11] = "ajw";
+  instr_table[12] = "eqc";
+  instr_table[13] = "stl";
+  instr_table[14] = "stnl";
+  instr_table[15] = "opr";
 }
 
-inicia2() {
-  tabla[16] = "rev";
-  tabla[17] = "lb";
-  tabla[18] = "bsub";
-  tabla[19] = "endp";
-  tabla[20] = "diff";
-  tabla[21] = "add";
-  tabla[22] = "gcall";
-  tabla[23] = "in";
-  tabla[24] = "prod";
-  tabla[25] = "gt";
-  tabla[26] = "wsub";
-  tabla[27] = "out";
-  tabla[28] = "sub";
-  tabla[29] = "startp";
-  tabla[30] = "outbyte";
-  tabla[31] = "outword";
+init_ops() {
+  instr_table[16] = "rev";
+  instr_table[17] = "lb";
+  instr_table[18] = "bsub";
+  instr_table[19] = "endp";
+  instr_table[20] = "diff";
+  instr_table[21] = "add";
+  instr_table[22] = "gcall";
+  instr_table[23] = "in";
+  instr_table[24] = "prod";
+  instr_table[25] = "gt";
+  instr_table[26] = "wsub";
+  instr_table[27] = "out";
+  instr_table[28] = "sub";
+  instr_table[29] = "startp";
+  instr_table[30] = "outbyte";
+  instr_table[31] = "outword";
 }
 
-inicia3() {
-  tabla[32] = "seterr";
-  tabla[33] = "?";
-  tabla[34] = "resetch";
-  tabla[35] = "csub0";
-  tabla[36] = "?";
-  tabla[37] = "stopp";
-  tabla[38] = "ladd";
-  tabla[39] = "stlb";
-  tabla[40] = "sthf";
-  tabla[41] = "norm";
-  tabla[42] = "ldiv";
-  tabla[43] = "ldpi";
-  tabla[44] = "stlf";
-  tabla[45] = "xdble";
-  tabla[46] = "ldpri";
-  tabla[47] = "rem";
+init_instr1() {
+  instr_table[32] = "seterr";
+  instr_table[33] = "?";
+  instr_table[34] = "resetch";
+  instr_table[35] = "csub0";
+  instr_table[36] = "?";
+  instr_table[37] = "stopp";
+  instr_table[38] = "ladd";
+  instr_table[39] = "stlb";
+  instr_table[40] = "sthf";
+  instr_table[41] = "norm";
+  instr_table[42] = "ldiv";
+  instr_table[43] = "ldpi";
+  instr_table[44] = "stlf";
+  instr_table[45] = "xdble";
+  instr_table[46] = "ldpri";
+  instr_table[47] = "rem";
 
-  tabla[48] = "ret";
-  tabla[49] = "lend";
-  tabla[50] = "ldtimer";
-  tabla[51] =
-  tabla[52] =
-  tabla[53] =
-  tabla[54] =
-  tabla[55] =
-  tabla[56] = "?";
-  tabla[57] = "testerr";
-  tabla[58] = "testpranal";
-  tabla[59] = "tin";
-  tabla[60] = "div";
-  tabla[61] = "?";
-  tabla[62] = "dist";
-  tabla[63] = "disc";
+  instr_table[48] = "ret";
+  instr_table[49] = "lend";
+  instr_table[50] = "ldtimer";
+  instr_table[51] =
+  instr_table[52] =
+  instr_table[53] =
+  instr_table[54] =
+  instr_table[55] =
+  instr_table[56] = "?";
+  instr_table[57] = "testerr";
+  instr_table[58] = "testpranal";
+  instr_table[59] = "tin";
+  instr_table[60] = "div";
+  instr_table[61] = "?";
+  instr_table[62] = "dist";
+  instr_table[63] = "disc";
 
-  tabla[64] = "diss";
-  tabla[65] = "lmul";
-  tabla[66] = "not";
-  tabla[67] = "xor";
-  tabla[68] = "bcnt";
-  tabla[69] = "lshr";
-  tabla[70] = "lshl";
-  tabla[71] = "lsum";
-  tabla[72] = "lsub";
-  tabla[73] = "runp";
-  tabla[74] = "xword";
-  tabla[75] = "sb";
-  tabla[76] = "gajw";
-  tabla[77] = "savel";
-  tabla[78] = "saveh";
-  tabla[79] = "wcnt";
+  instr_table[64] = "diss";
+  instr_table[65] = "lmul";
+  instr_table[66] = "not";
+  instr_table[67] = "xor";
+  instr_table[68] = "bcnt";
+  instr_table[69] = "lshr";
+  instr_table[70] = "lshl";
+  instr_table[71] = "lsum";
+  instr_table[72] = "lsub";
+  instr_table[73] = "runp";
+  instr_table[74] = "xword";
+  instr_table[75] = "sb";
+  instr_table[76] = "gajw";
+  instr_table[77] = "savel";
+  instr_table[78] = "saveh";
+  instr_table[79] = "wcnt";
 
-  tabla[80] = "shr";
-  tabla[81] = "shl";
-  tabla[82] = "mint";
-  tabla[83] = "alt";
-  tabla[84] = "altwt";
-  tabla[85] = "altend";
-  tabla[86] = "and";
-  tabla[87] = "enbt";
-  tabla[88] = "enbc";
-  tabla[89] = "enbs";
-  tabla[90] = "move";
-  tabla[91] = "or";
-  tabla[92] = "csngl";
-  tabla[93] = "ccnt1";
-  tabla[94] = "talt";
-  tabla[95] = "ldiff";
+  instr_table[80] = "shr";
+  instr_table[81] = "shl";
+  instr_table[82] = "mint";
+  instr_table[83] = "alt";
+  instr_table[84] = "altwt";
+  instr_table[85] = "altend";
+  instr_table[86] = "and";
+  instr_table[87] = "enbt";
+  instr_table[88] = "enbc";
+  instr_table[89] = "enbs";
+  instr_table[90] = "move";
+  instr_table[91] = "or";
+  instr_table[92] = "csngl";
+  instr_table[93] = "ccnt1";
+  instr_table[94] = "talt";
+  instr_table[95] = "ldiff";
 
-  tabla[96] = "sthb";
-  tabla[97] = "taltwt";
-  tabla[98] = "sum";
-  tabla[99] = "mul";
-  tabla[100] = "sttimer";
-  tabla[101] = "stoperr";
-  tabla[102] = "cword";
-  tabla[103] = "clrhalterr";
-  tabla[104] = "sethalterr";
-  tabla[105] = "testhalterr";
-  tabla[106] = "dup";
-  tabla[107] = "move2dinit";
-  tabla[108] = "move2dall";
-  tabla[109] = "move2dnonzero";
-  tabla[110] = "move2dzero";
-  tabla[111] = "?";
+  instr_table[96] = "sthb";
+  instr_table[97] = "taltwt";
+  instr_table[98] = "sum";
+  instr_table[99] = "mul";
+  instr_table[100] = "sttimer";
+  instr_table[101] = "stoperr";
+  instr_table[102] = "cword";
+  instr_table[103] = "clrhalterr";
+  instr_table[104] = "sethalterr";
+  instr_table[105] = "testhalterr";
+  instr_table[106] = "dup";
+  instr_table[107] = "move2dinit";
+  instr_table[108] = "move2dall";
+  instr_table[109] = "move2dnonzero";
+  instr_table[110] = "move2dzero";
+  instr_table[111] = "?";
 
-  tabla[112] =
-  tabla[113] =
-  tabla[114] = "?";
-  tabla[115] = "unpacksn";
-  tabla[116] =
-  tabla[117] =
-  tabla[118] =
-  tabla[119] =
-  tabla[120] =
-  tabla[121] =
-  tabla[122] =
-  tabla[123] = "?";
-  tabla[124] = "postnormsn";
-  tabla[125] = "roundsn";
-  tabla[126] =
-  tabla[127] = "?";
+  instr_table[112] =
+  instr_table[113] =
+  instr_table[114] = "?";
+  instr_table[115] = "unpacksn";
+  instr_table[116] =
+  instr_table[117] =
+  instr_table[118] =
+  instr_table[119] =
+  instr_table[120] =
+  instr_table[121] =
+  instr_table[122] =
+  instr_table[123] = "?";
+  instr_table[124] = "postnormsn";
+  instr_table[125] = "roundsn";
+  instr_table[126] =
+  instr_table[127] = "?";
 
-  tabla[128] = "?";
-  tabla[129] = "ldinf";
-  tabla[130] = "fmul";
-  tabla[131] = "cflerr";
-  tabla[132] = "crcword";
-  tabla[133] = "crcbyte";
-  tabla[134] = "bitcnt";
-  tabla[135] = "bitrevword";
-  tabla[136] = "bitrevnbits";
-  tabla[137] = "pop";
-  tabla[138] = "timerdisableh";
-  tabla[139] = "timerdisablel";
-  tabla[140] = "timerenableh";
-  tabla[141] = "timerenablel";
-  tabla[142] = "ldmemstartval";
-  tabla[143] = "?";
+  instr_table[128] = "?";
+  instr_table[129] = "ldinf";
+  instr_table[130] = "fmul";
+  instr_table[131] = "cflerr";
+  instr_table[132] = "crcword";
+  instr_table[133] = "crcbyte";
+  instr_table[134] = "bitcnt";
+  instr_table[135] = "bitrevword";
+  instr_table[136] = "bitrevnbits";
+  instr_table[137] = "pop";
+  instr_table[138] = "timerdisableh";
+  instr_table[139] = "timerdisablel";
+  instr_table[140] = "timerenableh";
+  instr_table[141] = "timerenablel";
+  instr_table[142] = "ldmemstartval";
+  instr_table[143] = "?";
 
-  tabla[144] = "?";
-  tabla[145] = "wsubdb";
-  tabla[146] = "fpldnldbi";
-  tabla[147] = "fpchkerror";
-  tabla[148] = "fpstnldb";
-  tabla[149] = "?";
-  tabla[150] = "fpldnlsni";
-  tabla[151] = "fpadd";
-  tabla[152] = "fpstnlsn";
-  tabla[153] = "fpsub";
-  tabla[154] = "fpldnldb";
-  tabla[155] = "fpmul";
-  tabla[156] = "fpdiv";
-  tabla[157] = "?";
-  tabla[158] = "fpldnlsn";
-  tabla[159] = "fpremfirst";
+  instr_table[144] = "?";
+  instr_table[145] = "wsubdb";
+  instr_table[146] = "fpldnldbi";
+  instr_table[147] = "fpchkerror";
+  instr_table[148] = "fpstnldb";
+  instr_table[149] = "?";
+  instr_table[150] = "fpldnlsni";
+  instr_table[151] = "fpadd";
+  instr_table[152] = "fpstnlsn";
+  instr_table[153] = "fpsub";
+  instr_table[154] = "fpldnldb";
+  instr_table[155] = "fpmul";
+  instr_table[156] = "fpdiv";
+  instr_table[157] = "?";
+  instr_table[158] = "fpldnlsn";
+  instr_table[159] = "fpremfirst";
 }
 
-inicia4() {
-  tabla[160] = "fpremstep";
-  tabla[161] = "fpnan";
-  tabla[162] = "fpordered";
-  tabla[163] = "fpnotfinite";
-  tabla[164] = "fpgt";
-  tabla[165] = "fpeq";
-  tabla[166] = "fpi32tor32";
-  tabla[167] = "?";
-  tabla[168] = "fpi32tor64";
-  tabla[169] = "?";
-  tabla[170] = "fpb32tor64";
-  tabla[171] = "?";
-  tabla[172] = "fptesterror";
-  tabla[173] = "fprtoi32";
-  tabla[174] = "fpstnli32";
-  tabla[175] = "fpldzerosn";
+init_instr2() {
+  instr_table[160] = "fpremstep";
+  instr_table[161] = "fpnan";
+  instr_table[162] = "fpordered";
+  instr_table[163] = "fpnotfinite";
+  instr_table[164] = "fpgt";
+  instr_table[165] = "fpeq";
+  instr_table[166] = "fpi32tor32";
+  instr_table[167] = "?";
+  instr_table[168] = "fpi32tor64";
+  instr_table[169] = "?";
+  instr_table[170] = "fpb32tor64";
+  instr_table[171] = "?";
+  instr_table[172] = "fptesterror";
+  instr_table[173] = "fprtoi32";
+  instr_table[174] = "fpstnli32";
+  instr_table[175] = "fpldzerosn";
 
-  tabla[176] = "fpldzerodb";
-  tabla[177] = "fpint";
-  tabla[178] = "?";
-  tabla[179] = "fpdup";
-  tabla[180] = "fprev";
-  tabla[181] = "?";
-  tabla[182] = "fpldnladddb";
-  tabla[183] = "?";
-  tabla[184] = "fpldnlmuldb";
-  tabla[185] = "?";
-  tabla[186] = "fpldnladdsn";
-  tabla[187] = "fpentry";
-  tabla[188] = "fpldnlmulsn";
-  tabla[189] =
-  tabla[190] =
-  tabla[191] = "?";
+  instr_table[176] = "fpldzerodb";
+  instr_table[177] = "fpint";
+  instr_table[178] = "?";
+  instr_table[179] = "fpdup";
+  instr_table[180] = "fprev";
+  instr_table[181] = "?";
+  instr_table[182] = "fpldnladddb";
+  instr_table[183] = "?";
+  instr_table[184] = "fpldnlmuldb";
+  instr_table[185] = "?";
+  instr_table[186] = "fpldnladdsn";
+  instr_table[187] = "fpentry";
+  instr_table[188] = "fpldnlmulsn";
+  instr_table[189] =
+  instr_table[190] =
+  instr_table[191] = "?";
 
-  tabla[192] = "?";
-  tabla[193] = "break";
-  tabla[194] = "clrj0break";
-  tabla[195] = "setj0break";
-  tabla[196] = "testj0break";
-  tabla[197] =
-  tabla[198] =
-  tabla[199] =
-  tabla[200] =
-  tabla[201] =
-  tabla[202] =
-  tabla[203] =
-  tabla[204] =
-  tabla[205] =
-  tabla[206] =
-  tabla[207] = "?";
+  instr_table[192] = "?";
+  instr_table[193] = "break";
+  instr_table[194] = "clrj0break";
+  instr_table[195] = "setj0break";
+  instr_table[196] = "testj0break";
+  instr_table[197] =
+  instr_table[198] =
+  instr_table[199] =
+  instr_table[200] =
+  instr_table[201] =
+  instr_table[202] =
+  instr_table[203] =
+  instr_table[204] =
+  instr_table[205] =
+  instr_table[206] =
+  instr_table[207] = "?";
 
-  tabla[208] =
-  tabla[209] =
-  tabla[210] =
-  tabla[211] =
-  tabla[212] =
-  tabla[213] =
-  tabla[214] =
-  tabla[215] =
-  tabla[216] =
-  tabla[217] =
-  tabla[218] =
-  tabla[219] =
-  tabla[220] =
-  tabla[221] =
-  tabla[222] =
-  tabla[223] = "?";
+  instr_table[208] =
+  instr_table[209] =
+  instr_table[210] =
+  instr_table[211] =
+  instr_table[212] =
+  instr_table[213] =
+  instr_table[214] =
+  instr_table[215] =
+  instr_table[216] =
+  instr_table[217] =
+  instr_table[218] =
+  instr_table[219] =
+  instr_table[220] =
+  instr_table[221] =
+  instr_table[222] =
+  instr_table[223] = "?";
 
-  tabla[224] =
-  tabla[225] =
-  tabla[226] =
-  tabla[227] =
-  tabla[228] =
-  tabla[229] =
-  tabla[230] =
-  tabla[231] =
-  tabla[232] =
-  tabla[233] =
-  tabla[234] =
-  tabla[235] =
-  tabla[236] =
-  tabla[237] =
-  tabla[238] =
-  tabla[239] = "?";
+  instr_table[224] =
+  instr_table[225] =
+  instr_table[226] =
+  instr_table[227] =
+  instr_table[228] =
+  instr_table[229] =
+  instr_table[230] =
+  instr_table[231] =
+  instr_table[232] =
+  instr_table[233] =
+  instr_table[234] =
+  instr_table[235] =
+  instr_table[236] =
+  instr_table[237] =
+  instr_table[238] =
+  instr_table[239] = "?";
 
-  tabla[240] =
-  tabla[241] =
-  tabla[242] =
-  tabla[243] =
-  tabla[244] =
-  tabla[245] =
-  tabla[246] =
-  tabla[247] =
-  tabla[248] =
-  tabla[249] =
-  tabla[250] =
-  tabla[251] =
-  tabla[252] =
-  tabla[253] =
-  tabla[254] =
-  tabla[255] = "?";
+  instr_table[240] =
+  instr_table[241] =
+  instr_table[242] =
+  instr_table[243] =
+  instr_table[244] =
+  instr_table[245] =
+  instr_table[246] =
+  instr_table[247] =
+  instr_table[248] =
+  instr_table[249] =
+  instr_table[250] =
+  instr_table[251] =
+  instr_table[252] =
+  instr_table[253] =
+  instr_table[254] =
+  instr_table[255] = "?";
 
-  tabla[256] =
-  tabla[257] =
-  tabla[258] =
-  tabla[259] =
-  tabla[260] =
-  tabla[261] =
-  tabla[262] =
-  tabla[263] =
-  tabla[264] =
-  tabla[265] =
-  tabla[266] =
-  tabla[267] =
-  tabla[268] =
-  tabla[269] =
-  tabla[270] =
-  tabla[271] = "?";
+  instr_table[256] =
+  instr_table[257] =
+  instr_table[258] =
+  instr_table[259] =
+  instr_table[260] =
+  instr_table[261] =
+  instr_table[262] =
+  instr_table[263] =
+  instr_table[264] =
+  instr_table[265] =
+  instr_table[266] =
+  instr_table[267] =
+  instr_table[268] =
+  instr_table[269] =
+  instr_table[270] =
+  instr_table[271] = "?";
 }
 
-inicia5() {
-  tabla[272] = "?";
-  tabla[273] = "fpusqrtfirst";
-  tabla[274] = "fpusqrtstep";
-  tabla[275] = "fpusqrtlast";
-  tabla[276] = "fpurp";
-  tabla[277] = "fpurm";
-  tabla[278] = "fpurz";
-  tabla[279] = "fpur32tor64";
-  tabla[280] = "fpur64tor32";
-  tabla[281] = "fpuexpdec32";
-  tabla[282] = "fpuexpinc32";
-  tabla[283] = "fpuabs";
-  tabla[284] = "?";
-  tabla[285] = "fpunoround";
-  tabla[286] = "fpuchki32";
-  tabla[287] = "fpuchki64";
+init_fpu() {
+  instr_table[272] = "?";
+  instr_table[273] = "fpusqrtfirst";
+  instr_table[274] = "fpusqrtstep";
+  instr_table[275] = "fpusqrtlast";
+  instr_table[276] = "fpurp";
+  instr_table[277] = "fpurm";
+  instr_table[278] = "fpurz";
+  instr_table[279] = "fpur32tor64";
+  instr_table[280] = "fpur64tor32";
+  instr_table[281] = "fpuexpdec32";
+  instr_table[282] = "fpuexpinc32";
+  instr_table[283] = "fpuabs";
+  instr_table[284] = "?";
+  instr_table[285] = "fpunoround";
+  instr_table[286] = "fpuchki32";
+  instr_table[287] = "fpuchki64";
 
-  tabla[288] = "?";
-  tabla[289] = "fpudivby2";
-  tabla[290] = "fpumulby2";
-  tabla[291] =
-  tabla[292] =
-  tabla[293] =
-  tabla[294] =
-  tabla[295] =
-  tabla[296] =
-  tabla[297] =
-  tabla[298] =
-  tabla[299] =
-  tabla[300] =
-  tabla[301] =
-  tabla[302] =
-  tabla[303] = "?";
+  instr_table[288] = "?";
+  instr_table[289] = "fpudivby2";
+  instr_table[290] = "fpumulby2";
+  instr_table[291] =
+  instr_table[292] =
+  instr_table[293] =
+  instr_table[294] =
+  instr_table[295] =
+  instr_table[296] =
+  instr_table[297] =
+  instr_table[298] =
+  instr_table[299] =
+  instr_table[300] =
+  instr_table[301] =
+  instr_table[302] =
+  instr_table[303] = "?";
 
-  tabla[304] =
-  tabla[305] = "?";
-  tabla[306] = "fpurn";
-  tabla[307] = "fpuseterror";
-  tabla[308] =
-  tabla[309] =
-  tabla[310] =
-  tabla[311] =
-  tabla[312] =
-  tabla[313] =
-  tabla[314] =
-  tabla[315] =
-  tabla[316] =
-  tabla[317] =
-  tabla[318] =
-  tabla[319] = "?";
+  instr_table[304] =
+  instr_table[305] = "?";
+  instr_table[306] = "fpurn";
+  instr_table[307] = "fpuseterror";
+  instr_table[308] =
+  instr_table[309] =
+  instr_table[310] =
+  instr_table[311] =
+  instr_table[312] =
+  instr_table[313] =
+  instr_table[314] =
+  instr_table[315] =
+  instr_table[316] =
+  instr_table[317] =
+  instr_table[318] =
+  instr_table[319] = "?";
 
-  tabla[320] =
-  tabla[321] =
-  tabla[322] =
-  tabla[323] =
-  tabla[324] =
-  tabla[325] =
-  tabla[326] =
-  tabla[327] =
-  tabla[328] =
-  tabla[329] =
-  tabla[330] =
-  tabla[331] =
-  tabla[332] =
-  tabla[333] =
-  tabla[334] =
-  tabla[335] = "?";
+  instr_table[320] =
+  instr_table[321] =
+  instr_table[322] =
+  instr_table[323] =
+  instr_table[324] =
+  instr_table[325] =
+  instr_table[326] =
+  instr_table[327] =
+  instr_table[328] =
+  instr_table[329] =
+  instr_table[330] =
+  instr_table[331] =
+  instr_table[332] =
+  instr_table[333] =
+  instr_table[334] =
+  instr_table[335] = "?";
 
-  tabla[336] =
-  tabla[337] =
-  tabla[338] =
-  tabla[339] =
-  tabla[340] =
-  tabla[341] =
-  tabla[342] =
-  tabla[343] =
-  tabla[344] =
-  tabla[345] =
-  tabla[346] =
-  tabla[347] =
-  tabla[348] =
-  tabla[349] =
-  tabla[350] =
-  tabla[351] = "?";
+  instr_table[336] =
+  instr_table[337] =
+  instr_table[338] =
+  instr_table[339] =
+  instr_table[340] =
+  instr_table[341] =
+  instr_table[342] =
+  instr_table[343] =
+  instr_table[344] =
+  instr_table[345] =
+  instr_table[346] =
+  instr_table[347] =
+  instr_table[348] =
+  instr_table[349] =
+  instr_table[350] =
+  instr_table[351] = "?";
 
-  tabla[352] =
-  tabla[353] =
-  tabla[354] =
-  tabla[355] =
-  tabla[356] =
-  tabla[357] =
-  tabla[358] =
-  tabla[359] =
-  tabla[360] =
-  tabla[361] =
-  tabla[362] =
-  tabla[363] =
-  tabla[364] =
-  tabla[365] =
-  tabla[366] =
-  tabla[367] = "?";
+  instr_table[352] =
+  instr_table[353] =
+  instr_table[354] =
+  instr_table[355] =
+  instr_table[356] =
+  instr_table[357] =
+  instr_table[358] =
+  instr_table[359] =
+  instr_table[360] =
+  instr_table[361] =
+  instr_table[362] =
+  instr_table[363] =
+  instr_table[364] =
+  instr_table[365] =
+  instr_table[366] =
+  instr_table[367] = "?";
 
-  tabla[368] =
-  tabla[369] =
-  tabla[370] =
-  tabla[371] =
-  tabla[372] =
-  tabla[373] =
-  tabla[374] =
-  tabla[375] =
-  tabla[376] =
-  tabla[377] =
-  tabla[378] =
-  tabla[379] =
-  tabla[380] =
-  tabla[381] =
-  tabla[382] =
-  tabla[383] = "?";
+  instr_table[368] =
+  instr_table[369] =
+  instr_table[370] =
+  instr_table[371] =
+  instr_table[372] =
+  instr_table[373] =
+  instr_table[374] =
+  instr_table[375] =
+  instr_table[376] =
+  instr_table[377] =
+  instr_table[378] =
+  instr_table[379] =
+  instr_table[380] =
+  instr_table[381] =
+  instr_table[382] =
+  instr_table[383] = "?";
 
-  tabla[384] =
-  tabla[385] =
-  tabla[386] =
-  tabla[387] =
-  tabla[388] =
-  tabla[389] =
-  tabla[390] =
-  tabla[391] =
-  tabla[392] =
-  tabla[393] =
-  tabla[394] =
-  tabla[395] =
-  tabla[396] =
-  tabla[397] =
-  tabla[398] =
-  tabla[399] = "?";
+  instr_table[384] =
+  instr_table[385] =
+  instr_table[386] =
+  instr_table[387] =
+  instr_table[388] =
+  instr_table[389] =
+  instr_table[390] =
+  instr_table[391] =
+  instr_table[392] =
+  instr_table[393] =
+  instr_table[394] =
+  instr_table[395] =
+  instr_table[396] =
+  instr_table[397] =
+  instr_table[398] =
+  instr_table[399] = "?";
 
-  tabla[400] =
-  tabla[401] =
-  tabla[402] =
-  tabla[403] =
-  tabla[404] =
-  tabla[405] =
-  tabla[406] =
-  tabla[407] =
-  tabla[408] =
-  tabla[409] =
-  tabla[410] =
-  tabla[411] =
-  tabla[412] =
-  tabla[413] =
-  tabla[414] =
-  tabla[415] = "?";
+  instr_table[400] =
+  instr_table[401] =
+  instr_table[402] =
+  instr_table[403] =
+  instr_table[404] =
+  instr_table[405] =
+  instr_table[406] =
+  instr_table[407] =
+  instr_table[408] =
+  instr_table[409] =
+  instr_table[410] =
+  instr_table[411] =
+  instr_table[412] =
+  instr_table[413] =
+  instr_table[414] =
+  instr_table[415] = "?";
 
-  tabla[416] =
-  tabla[417] =
-  tabla[418] =
-  tabla[419] =
-  tabla[420] =
-  tabla[421] =
-  tabla[422] =
-  tabla[423] =
-  tabla[424] =
-  tabla[425] =
-  tabla[426] =
-  tabla[427] = "?";
-  tabla[428] = "fpuclearerror";
-  tabla[429] =
-  tabla[430] =
-  tabla[431] = "?";
+  instr_table[416] =
+  instr_table[417] =
+  instr_table[418] =
+  instr_table[419] =
+  instr_table[420] =
+  instr_table[421] =
+  instr_table[422] =
+  instr_table[423] =
+  instr_table[424] =
+  instr_table[425] =
+  instr_table[426] =
+  instr_table[427] = "?";
+  instr_table[428] = "fpuclearerror";
+  instr_table[429] =
+  instr_table[430] =
+  instr_table[431] = "?";
 
-  tabla[432] =
-  tabla[433] =
-  tabla[434] =
-  tabla[435] =
-  tabla[436] =
-  tabla[437] =
-  tabla[438] =
-  tabla[439] =
-  tabla[440] =
-  tabla[441] =
-  tabla[442] =
-  tabla[443] =
-  tabla[444] =
-  tabla[445] =
-  tabla[446] =
-  tabla[447] = "?";
+  instr_table[432] =
+  instr_table[433] =
+  instr_table[434] =
+  instr_table[435] =
+  instr_table[436] =
+  instr_table[437] =
+  instr_table[438] =
+  instr_table[439] =
+  instr_table[440] =
+  instr_table[441] =
+  instr_table[442] =
+  instr_table[443] =
+  instr_table[444] =
+  instr_table[445] =
+  instr_table[446] =
+  instr_table[447] = "?";
 
-  tabla[448] =
-  tabla[449] =
-  tabla[450] =
-  tabla[451] =
-  tabla[452] =
-  tabla[453] =
-  tabla[454] =
-  tabla[455] =
-  tabla[456] =
-  tabla[457] =
-  tabla[458] =
-  tabla[459] =
-  tabla[460] =
-  tabla[461] =
-  tabla[462] =
-  tabla[463] = "?";
+  instr_table[448] =
+  instr_table[449] =
+  instr_table[450] =
+  instr_table[451] =
+  instr_table[452] =
+  instr_table[453] =
+  instr_table[454] =
+  instr_table[455] =
+  instr_table[456] =
+  instr_table[457] =
+  instr_table[458] =
+  instr_table[459] =
+  instr_table[460] =
+  instr_table[461] =
+  instr_table[462] =
+  instr_table[463] = "?";
 
-  tabla[464] =
-  tabla[465] =
-  tabla[466] =
-  tabla[467] =
-  tabla[468] =
-  tabla[469] =
-  tabla[470] =
-  tabla[471] =
-  tabla[472] =
-  tabla[473] =
-  tabla[474] =
-  tabla[475] =
-  tabla[476] =
-  tabla[477] =
-  tabla[478] =
-  tabla[479] = "?";
+  instr_table[464] =
+  instr_table[465] =
+  instr_table[466] =
+  instr_table[467] =
+  instr_table[468] =
+  instr_table[469] =
+  instr_table[470] =
+  instr_table[471] =
+  instr_table[472] =
+  instr_table[473] =
+  instr_table[474] =
+  instr_table[475] =
+  instr_table[476] =
+  instr_table[477] =
+  instr_table[478] =
+  instr_table[479] = "?";
 
-  tabla[480] =
-  tabla[481] =
-  tabla[482] =
-  tabla[483] =
-  tabla[484] =
-  tabla[485] =
-  tabla[486] =
-  tabla[487] =
-  tabla[488] =
-  tabla[489] =
-  tabla[490] =
-  tabla[491] =
-  tabla[492] =
-  tabla[493] =
-  tabla[494] =
-  tabla[495] = "?";
+  instr_table[480] =
+  instr_table[481] =
+  instr_table[482] =
+  instr_table[483] =
+  instr_table[484] =
+  instr_table[485] =
+  instr_table[486] =
+  instr_table[487] =
+  instr_table[488] =
+  instr_table[489] =
+  instr_table[490] =
+  instr_table[491] =
+  instr_table[492] =
+  instr_table[493] =
+  instr_table[494] =
+  instr_table[495] = "?";
 
-  tabla[496] =
-  tabla[497] =
-  tabla[498] =
-  tabla[499] =
-  tabla[500] =
-  tabla[501] =
-  tabla[502] =
-  tabla[503] =
-  tabla[504] =
-  tabla[505] =
-  tabla[506] =
-  tabla[507] =
-  tabla[508] =
-  tabla[509] =
-  tabla[510] =
-  tabla[511] = "?";
+  instr_table[496] =
+  instr_table[497] =
+  instr_table[498] =
+  instr_table[499] =
+  instr_table[500] =
+  instr_table[501] =
+  instr_table[502] =
+  instr_table[503] =
+  instr_table[504] =
+  instr_table[505] =
+  instr_table[506] =
+  instr_table[507] =
+  instr_table[508] =
+  instr_table[509] =
+  instr_table[510] =
+  instr_table[511] = "?";
 
-  tabla[512] =
-  tabla[513] =
-  tabla[514] =
-  tabla[515] =
-  tabla[516] =
-  tabla[517] =
-  tabla[518] =
-  tabla[519] =
-  tabla[520] =
-  tabla[521] =
-  tabla[522] =
-  tabla[523] =
-  tabla[524] =
-  tabla[525] =
-  tabla[526] =
-  tabla[527] =
-  tabla[528] = "?";
+  instr_table[512] =
+  instr_table[513] =
+  instr_table[514] =
+  instr_table[515] =
+  instr_table[516] =
+  instr_table[517] =
+  instr_table[518] =
+  instr_table[519] =
+  instr_table[520] =
+  instr_table[521] =
+  instr_table[522] =
+  instr_table[523] =
+  instr_table[524] =
+  instr_table[525] =
+  instr_table[526] =
+  instr_table[527] =
+  instr_table[528] = "?";
 }

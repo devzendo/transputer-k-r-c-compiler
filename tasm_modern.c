@@ -1,5 +1,5 @@
 /*
- ** Transputer assembler.
+ ** Modern Transputer assembler.
  **
  ** (c) Copyright 1995-2025 Oscar Toledo G.
  ** https://nanochess.org/

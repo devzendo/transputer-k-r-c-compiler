@@ -16,7 +16,7 @@ CFLAGS  = -std=gnu90 \
 
 BUILDDIR = build
 
-ALL      = $(BUILDDIR)/tc2_linux $(BUILDDIR)/tasm_linux \
+ALL = $(BUILDDIR)/tc2_linux $(BUILDDIR)/tasm_modern_linux \
 		$(BUILDDIR)/tc2.asm $(BUILDDIR)/tc2.bin
 
 .PHONY: all clean
@@ -29,14 +29,14 @@ $(BUILDDIR):
 $(BUILDDIR)/tc2_linux: tc2.c | $(BUILDDIR)
 	$(CC) $(CFLAGS) -o $@ $<
 
-$(BUILDDIR)/tasm_linux: tasm.c | $(BUILDDIR)
+$(BUILDDIR)/tasm_modern_linux: tasm_modern.c | $(BUILDDIR)
 	$(CC) -std=gnu99 -o $@ $<
 
 $(BUILDDIR)/tc2.asm: $(BUILDDIR)/tc2_linux
 	$(BUILDDIR)/tc2_linux < tc2.in
 
 $(BUILDDIR)/tc2.bin: $(BUILDDIR)/tc2.asm
-	$(BUILDDIR)/tasm_linux $(BUILDDIR)/tc2.asm $(BUILDDIR)/tc2.bin
+	$(BUILDDIR)/tasm_modern_linux $(BUILDDIR)/tc2.asm $(BUILDDIR)/tc2.bin
 
 
 clean:

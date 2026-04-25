@@ -18,8 +18,8 @@ The modifications are:
 * Translation of messages, identifiers, comments etc. from Spanish to English. Matt does
   not speak Spanish, but the translations are being verified against the Ron Cain article.
   See AI Declaration, below.
-* Modifications to allow the tools to be first built on modern 64-bit systems, notably
-  macOS Tahoe, Linux Mint 22, Windows 10.
+* Modifications to allow the tools to be first built on a 32-bit Linux system, running
+  Debian Bookworm.
 * Enhancements to work with the Parachute IServer.
 
 
@@ -44,11 +44,13 @@ that on the Transputer itself any time soon.
 Then I heard of Óscar's project, and asked permission to translate it, which was kindly
 granted.
 
-The plan is to first build the compiler and assembler on modern 64-bit systems - to
+The plan is to build the compiler and assembler on modern 64-bit systems - to
 provide tools for building C into Transputer binaries on these modern systems.
 
-It may be that these first versions have to run on a 32-bit system, as early experiments
-with 64-bit execution lead to crashes.
+However initially, these first versions have to run on a 32-bit system, as early experiments
+with 64-bit execution lead to crashes. I know where some pointer/int length
+problems lie, and will be working to address these problems, so that these tools
+can run on 64-bit systems.
 
 Then, use these versions of the compiler to compile itself, completing the
 bootstrap loop - providing tools that run on the Transputer directly, compiling into
@@ -67,7 +69,13 @@ It should be able to generate code for the T425ish that is currently emulated.
 
 
 ## Building
-For the first phase, build it with CMake. (Explain exactly how, later.)
+For the first phase, on Debian 32-bit Intel Linux, build it with GNU make:
+
+`make clean; make`
+
+This will build the compiler and assembler (build/tc2_linux and
+build/tasm_linux), then use this compiler to compile itself into the Transputer
+assembler file build/tc2.asm.
 
 To build it on the Transputer... (later)
 
@@ -139,8 +147,8 @@ Brian Kernighan & the late Dennis Ritchie, of course!
 # AI Declaration
 
 The very early commits to this repo contain translations of Óscar's original Spanish code
-into English. These were done by Matt using Claude. The CMakeLists.txt was also built with
-Claude's assistance. Matt has done his best to verify that these translations are correct.
+into English. These were done by Matt using Claude. Matt has done his best to verify
+that these translations are correct.
 
 Further miscellaneous translations done using Google Translate.
 

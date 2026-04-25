@@ -1,7 +1,9 @@
 /*
-** G10 Assembler.
+** Transputer Assembler, compilable by Small-C.
 **
 ** (c) Copyright 1995 Oscar Toledo G.
+**
+** English translation, modernisation by Matt Gumbley & Claude.
 **
 ** 17-jun-1995.
 */
@@ -64,13 +66,14 @@ char t[MEM_SIZE];
 
 main() {
   puts("\r\n");
-  puts("G10 Assembler  16-jun-95  (c) Copyright 1995 Oscar Toledo G.\r\n");
+  puts("Transputer Assembler  16-jun-95  (c) Copyright 1995 Oscar Toledo G.\r\n");
+  puts("Translation by Matt Gumbley\n\n");
   puts("\r\n");
   init_basic_ops();   /* The 16 basic instructions */
-  init_ops();   /* The 16 basic operations */
-  init_instr1();   /* First half of the instruction set */
-  init_instr2();   /* Second half of the instruction set */
-  init_fpu();   /* FPU microcode instructions */
+  init_ops();         /* The 16 basic operations */
+  init_instr1();      /* First half of the instruction set */
+  init_instr2();      /* Second half of the instruction set */
+  init_fpu();         /* FPU microcode instructions */
   num_files = 0;
   available = 1;
   first_label = NULL;
@@ -82,7 +85,7 @@ main() {
   asm_pos = 0;
   temp1_fp = fopen(TEMPORAL, "w");
   if(temp1_fp == NULL) {
-    puts("Error al crear el input_fp temporal\r\n\r\n");
+    puts("Error creating temporary input file\r\n\r\n");
     quit();
   }
   ptemp1 = 0;
@@ -107,7 +110,7 @@ main() {
       link_pass();
       puts("\r                          \r");
       print_decimal(num_labels);
-      puts(" define_label definidas.\r\n");
+      puts(" labels defined.\r\n");
       print_decimal((available + 1023) / 1024);
       puts(" KB used.\r\n\r\n");
       exit(1);
@@ -188,7 +191,7 @@ assemble() {
     }
     else if(match_str("equ", token)) {
       if(has_label) def_equ();
-      else error("El equ debe ir con una define_label");
+      else error("equ must have a label");
       break;
     }
     else {
@@ -561,7 +564,7 @@ def_space() {
   parse_err = 0;
   val = eval_expr();
   if(parse_err) {
-    error("Se requiere un val definido");
+    error("A defined value is required");
     return;
   }
   while(val--) {
@@ -577,7 +580,7 @@ def_equ() {
   parse_err = 0;
   val = eval_expr();
   if(parse_err) {
-    error("Se requiere un val definido");
+    error("A defined value is required");
     return;
   }
   if(last_label == NULL) {

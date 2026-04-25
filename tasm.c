@@ -52,7 +52,7 @@ char *first_unres;
 char *last_unres;
 int num_unres;
 int ptemp1, ptemp2;
-char name_buf[15];
+char name_buf[32];
 char line_buf[LINE_SIZE];
 char token[LINE_SIZE];
 char token2[LINE_SIZE];
@@ -92,7 +92,7 @@ main() {
   temp2_fp = NULL;
   while(1) {
     puts("Input file > ");
-    read_input(name_buf, 15);
+    read_input(name_buf, 32);
     if(*name_buf == 0) {
       flush_temp1();
       if(num_files == 0) {
@@ -101,7 +101,7 @@ main() {
       }
       current_line = 0;
       puts("Output file > ");
-      read_input(name_buf, 15);
+      read_input(name_buf, 32);
       if(*name_buf == 0) {
         puts("\r\nAssembly cancelled.\r\n\r\n");
         quit();
@@ -812,7 +812,7 @@ read_input(addr, size) char *addr; int size; {
       putchar(8);
       --cur;
       continue;
-    } else if(ch == 13) {
+    } else if(ch == 10 || ch == 13) {
       puts("\r\n");
       *cur = 0;
       return;

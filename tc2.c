@@ -11,9 +11,9 @@
 ** 12-jun-1995
 */
 
-#define BANNER  "*** C Compiler for G-10 ***"
-#define AUTHOR  "   by Oscar Toledo Gutierrez."
-#define VERSION "          Version 1.00"
+#define BANNER  "Transputer Small C Compiler"
+#define AUTHOR  "By Oscar Toledo Gutierrez; translated by Matt Gumbley."
+#define VERSION "Version 1.01"
 
 #define NO      0
 #define YES     1

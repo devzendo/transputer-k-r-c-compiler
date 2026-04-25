@@ -222,10 +222,11 @@ void error(char *, char *);
 int main(int argc, char *argv[])
 {
     fprintf(stderr, "\n");
-    fprintf(stderr, "Transputer assembler v0.1. Feb/01/2025\n");
-    fprintf(stderr, "by Oscar Toledo G. https://nanochess.org/\n\n");
+    fprintf(stderr, "Transputer assembler v0.2. 25 Apr 2026\n");
+    fprintf(stderr, "By Oscar Toledo G. https://nanochess.org/\n");
+    fprintf(stderr, "Translation by Matt Gumbley\n\n");
     if (argc != 3 && argc != 4) {
-        fprintf(stderr, "Usage: tasm input.len output.cmg library.len\n\n");
+        fprintf(stderr, "Usage: tasm input.asm output.bin library.asm\n\n");
         exit(1);
     }
     input_file = argv[1];

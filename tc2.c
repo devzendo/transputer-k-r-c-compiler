@@ -127,9 +127,12 @@ int lidx, midx;         /* Respective indices */
 
 /* Miscellaneous storage */
 char *                  /* FILE * really, but this compiler only understands char * */
-    input,              /* Input file */
-    output,             /* Output file */
-    input2,             /* #include file */
+    input;              /* Input file */
+char *
+    output;             /* Output file */
+char *
+    input2;             /* #include file */
+char *
     saveout;            /* Indicates redirect to console */
 
 int nxtlab,             /* Next available label */
@@ -1556,18 +1559,6 @@ outdec(number)
       outdec(number / 10);
     outbyte((number % 10) + '0');
   }
-}
-
-/* Return the length of a string. */
-strlen(s)
-  char *s;
-{
-  char *t;
-
-  t = s;
-  while (*s)
-    s++;
-  return (s - t);
 }
 
 /* Convert to uppercase. */

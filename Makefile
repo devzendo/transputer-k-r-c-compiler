@@ -17,7 +17,7 @@ CFLAGS  = -std=gnu90 \
 BUILDDIR = build
 
 ALL      = $(BUILDDIR)/tc2_linux $(BUILDDIR)/tasm_linux \
-		$(BUILDDIR)/tc2.asm
+		$(BUILDDIR)/tc2.asm $(BUILDDIR)/tc2.bin
 
 .PHONY: all clean
 
@@ -34,6 +34,10 @@ $(BUILDDIR)/tasm_linux: tasm.c | $(BUILDDIR)
 
 $(BUILDDIR)/tc2.asm: $(BUILDDIR)/tc2_linux
 	$(BUILDDIR)/tc2_linux < tc2.in
+
+$(BUILDDIR)/tc2.bin: $(BUILDDIR)/tc2.asm
+	$(BUILDDIR)/tasm_linux $(BUILDDIR)/tc2.asm $(BUILDDIR)/tc2.bin
+
 
 clean:
 	rm -rf $(BUILDDIR)

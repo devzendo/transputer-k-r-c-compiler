@@ -51,6 +51,9 @@ $(BUILDDIR)/tc2.bin: $(BUILDDIR)/tc2.asm
 $(BUILDDIR)/tasm.asm: $(BUILDDIR)/tc2_linux
 	$(BUILDDIR)/tc2_linux < tasm.in
 
+$(BUILDDIR)/tasm.bin: $(BUILDDIR)/tasm.asm
+	$(BUILDDIR)/tasm_linux < tasm_bin.in
+
 $(BUILDDIR)/tasm_modern.bin: $(BUILDDIR)/tasm.asm
 	$(BUILDDIR)/tasm_modern_linux $(BUILDDIR)/tasm.asm $(BUILDDIR)/tasm_modern.bin
 

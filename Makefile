@@ -16,7 +16,9 @@ CFLAGS  = -std=gnu90 \
 
 BUILDDIR = build
 
-ALL = $(BUILDDIR)/tc2_linux $(BUILDDIR)/tasm_modern_linux \
+ALL = $(BUILDDIR)/tc2_linux \
+		$(BUILDDIR)/tc2_es_orig_linux \
+		$(BUILDDIR)/tasm_modern_linux \
 		$(BUILDDIR)/tasm_linux \
 		$(BUILDDIR)/tc2.asm \
 		$(BUILDDIR)/tc2_modern.bin $(BUILDDIR)/tc2.bin \
@@ -31,36 +33,47 @@ $(BUILDDIR):
 	mkdir -p $(BUILDDIR)
 
 $(BUILDDIR)/tc2_linux: tc2.c | $(BUILDDIR)
+	echo Building $@
 	$(CC) $(CFLAGS) -o $@ $<
 
 $(BUILDDIR)/tc2_es_orig_linux: tc2_es_orig.c | $(BUILDDIR)
+	echo Building $@
 	$(CC) $(CFLAGS) -o $@ $<
 
 $(BUILDDIR)/tasm_linux: tasm.c | $(BUILDDIR)
+	echo Building $@
 	$(CC) $(CFLAGS) -o $@ $<
 
 $(BUILDDIR)/tasm_modern_linux: tasm_modern.c | $(BUILDDIR)
+	echo Building $@
 	$(CC) -std=gnu99 -o $@ $<
 
 $(BUILDDIR)/tc2.asm: $(BUILDDIR)/tc2_linux
+	echo Building $@
 	$(BUILDDIR)/tc2_linux < tc2.in
 
 $(BUILDDIR)/tc2_modern.bin: $(BUILDDIR)/tc2.asm
+	echo Building $@
 	$(BUILDDIR)/tasm_modern_linux $(BUILDDIR)/tc2.asm $(BUILDDIR)/tc2_modern.bin
 
 $(BUILDDIR)/tc2.bin: $(BUILDDIR)/tc2.asm
+	echo Building $@
 	$(BUILDDIR)/tasm_linux < tc2_bin.in
 
 $(BUILDDIR)/tasm.asm: $(BUILDDIR)/tc2_linux
+	echo Building $@
 	$(BUILDDIR)/tc2_linux < tasm.in
 
 $(BUILDDIR)/tasm.bin: $(BUILDDIR)/tasm.asm
+	echo Building $@
 	$(BUILDDIR)/tasm_linux < tasm_bin.in
 
 $(BUILDDIR)/tasm_modern.bin: $(BUILDDIR)/tasm.asm
+	echo Building $@
 	$(BUILDDIR)/tasm_modern_linux $(BUILDDIR)/tasm.asm $(BUILDDIR)/tasm_modern.bin
 
 #$(BUILDDIR)/tasm.bin: $(BUILDDIR)/tasm.asm
+#	echo Building $@
 #	$(BUILDDIR)/tasm_linux $(BUILDDIR)/tasm.asm $(BUILDDIR)/tasm.bin
 
 

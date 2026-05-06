@@ -118,6 +118,61 @@ Local variables throughout: izq→left, der→right, conteo→count, pals→word
 ## All comments
 Every block and inline comment translated, including the full function-header doc comments.
 
+## Verification
+Both the original compiler and the translated compiler (with changes to build
+successfully on Debian 32-bit) were run, and the original Spanish compiler
+source was compiled into the two files 
+`tc2_es_orig-en.asm` (by the translated English compiler) and
+tc2_es_orig-es.asm` (by the original Spanish compiler).
+These files are committed into the repository. The diff between the two is shown
+in `tc2_es_orig.asm.diff`, an explanation of which follows:
+```
+1,3c1,3
+< ;*** Compilador de C para G-10 ***
+< ;          Version 1.00
+< ;   por Oscar Toledo Gutierrez.
+---
+> ;Transputer Small C Compiler
+> ;Version 1.01
+> ;By Oscar Toledo Gutierrez; translated by Matt Gumbley.
+
+The banner emitted by the compiler into the output assembler. This has been
+justified and modified by Matt.
+
+5,6c5,6
+< COMIENZO:
+< j INICIO
+---
+> START:
+> j ENTRY
+13009,13010c13009,13010
+< ; Fin de compilacion
+< INICIO:
+---
+> ; End of compilation
+> ENTRY:
+13016c13016
+< INICIO2:
+---
+> ENTRY2:
+13028c13028
+< cj INICIO2
+---
+> cj ENTRY2
+
+The compiler emits the symbols `COMIENZO/START`, `INICIO/ENTRY`,
+`INICIO2/ENTRY2` at the start and end of the compiled code. These symbols have
+been translated.
+```
+
+Since the assembly of a complex program is essentially identical between the 
+original Spanish version and the translated English version, I conclude
+that the AI translation has been successful, and has not adversely
+affected the operation of the compiler in any way, other than translating
+symbols, messages and comments..
+
+
+
 # Modern Assembler Translation details
 
 ## Structs

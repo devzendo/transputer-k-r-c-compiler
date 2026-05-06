@@ -33,6 +33,9 @@ $(BUILDDIR):
 $(BUILDDIR)/tc2_linux: tc2.c | $(BUILDDIR)
 	$(CC) $(CFLAGS) -o $@ $<
 
+$(BUILDDIR)/tc2_es_orig_linux: tc2_es_orig.c | $(BUILDDIR)
+	$(CC) $(CFLAGS) -o $@ $<
+
 $(BUILDDIR)/tasm_linux: tasm.c | $(BUILDDIR)
 	$(CC) $(CFLAGS) -o $@ $<
 

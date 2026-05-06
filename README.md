@@ -26,7 +26,7 @@ The modifications are:
 It is part of the [Parachute Project](https://devzendo.github.io/parachute).
 
 ## Project Status
-Actively in development.
+Actively in development, last changes in May 2026.
 
 Started late April 2026. 
 

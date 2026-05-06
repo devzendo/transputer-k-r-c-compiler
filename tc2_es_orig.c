@@ -210,7 +210,7 @@ abort()
   toconsole();
   pl("Compilaci¢n cancelada.");
   nl();
-  exit();
+  exit(0);
 }
 
 
@@ -886,7 +886,7 @@ doasm()
 {
   cmode = 0;                    /* Marca modo ensamblador */
   while (1) {
-    inline();                   /* Obtiene y imprime lineas */
+    in_line();                   /* Obtiene y imprime lineas */
     if (match("#endasm"))
       break;                    /* hasta que... */
     if (eof)
@@ -1145,13 +1145,13 @@ inbyte()
   while (ch() == 0) {
     if (eof)
       return 0;
-    inline();
+    in_line();
     preprocess();
   }
   return gch();
 }
 
-inline()
+in_line()
 {
   int k, unit;
 
@@ -1288,7 +1288,7 @@ precomm()
   while (((ch() == '*') &
 	  (nch() == '/')) == 0) {
     if (ch() == 0)
-      inline();
+      in_line();
     else
       ++lptr;
     if (eof)
@@ -1527,7 +1527,7 @@ blanks()
 {
   while (1) {
     while (ch() == 0) {
-      inline();
+      in_line();
       preprocess();
       if (eof)
 	break;

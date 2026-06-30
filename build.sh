@@ -2,3 +2,5 @@
 set -euo pipefail
 apt-get update
 apt-get install make -y
+make all
+

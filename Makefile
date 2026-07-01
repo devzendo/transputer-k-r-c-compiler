@@ -21,9 +21,12 @@ ALL = $(BUILDDIR)/tc2_linux \
 		$(BUILDDIR)/tasm_modern_linux \
 		$(BUILDDIR)/tasm_linux \
 		$(BUILDDIR)/tc2.asm \
-		$(BUILDDIR)/tc2_modern.bin $(BUILDDIR)/tc2.bin \
+		$(BUILDDIR)/tc2_modern.bin \
 		$(BUILDDIR)/tasm.asm \
-		$(BUILDDIR)/tasm_modern.bin $(BUILDDIR)/tasm.bin
+		$(BUILDDIR)/tasm_modern.bin
+
+#		$(BUILDDIR)/tc2.bin \
+#		$(BUILDDIR)/tasm.bin
 
 .PHONY: all clean
 
@@ -56,17 +59,17 @@ $(BUILDDIR)/tc2_modern.bin: $(BUILDDIR)/tc2.asm
 	echo Building $@
 	$(BUILDDIR)/tasm_modern_linux $(BUILDDIR)/tc2.asm $(BUILDDIR)/tc2_modern.bin
 
-$(BUILDDIR)/tc2.bin: $(BUILDDIR)/tc2.asm
-	echo Building $@
-	$(BUILDDIR)/tasm_linux < tc2_bin.in
+#$(BUILDDIR)/tc2.bin: $(BUILDDIR)/tc2.asm
+#	echo Building $@
+#	$(BUILDDIR)/tasm_linux < tc2_bin.in
 
 $(BUILDDIR)/tasm.asm: $(BUILDDIR)/tc2_linux
 	echo Building $@
 	$(BUILDDIR)/tc2_linux < tasm.in
 
-$(BUILDDIR)/tasm.bin: $(BUILDDIR)/tasm.asm
-	echo Building $@
-	$(BUILDDIR)/tasm_linux < tasm_bin.in
+#$(BUILDDIR)/tasm.bin: $(BUILDDIR)/tasm.asm
+#	echo Building $@
+#	$(BUILDDIR)/tasm_linux < tasm_bin.in
 
 $(BUILDDIR)/tasm_modern.bin: $(BUILDDIR)/tasm.asm
 	echo Building $@

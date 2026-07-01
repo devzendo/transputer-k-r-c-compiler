@@ -20,13 +20,13 @@ ALL = $(BUILDDIR)/tc2_linux \
 		$(BUILDDIR)/tc2_es_orig_linux \
 		$(BUILDDIR)/tasm_modern_linux \
 		$(BUILDDIR)/tc2.asm \
-		$(BUILDDIR)/tc2_modern.bin \
 		$(BUILDDIR)/tasm.asm \
-		$(BUILDDIR)/tasm_modern.bin
+		$(BUILDDIR)/tc2.bin \
+		$(BUILDDIR)/tasm.bin
 
 #		$(BUILDDIR)/tasm_linux \
 #		$(BUILDDIR)/tc2.bin \
-#		$(BUILDDIR)/tasm.bin
+#		$(BUILDDIR)/tasm_modern.bin
 
 .PHONY: all clean
 
@@ -34,6 +34,8 @@ all: $(BUILDDIR) $(ALL)
 
 $(BUILDDIR):
 	mkdir -p $(BUILDDIR)
+
+# Build the English compiler (tc2) and the Spanish compiler (tc2_es_orig) for Linux.
 
 $(BUILDDIR)/tc2_linux: tc2.c | $(BUILDDIR)
 	echo Building $@
@@ -47,33 +49,39 @@ $(BUILDDIR)/tc2_es_orig_linux: tc2_es_orig.c | $(BUILDDIR)
 #	echo Building $@
 #	$(CC) $(CFLAGS) -o $@ $<
 
+# Build the modern assembler (tasm_modern) for Linux. It's not in Small-C, so can't be built for Transputer.
+
 $(BUILDDIR)/tasm_modern_linux: tasm_modern.c | $(BUILDDIR)
 	echo Building $@
 	$(CC) -std=gnu99 -o $@ $<
+
+# Using the English Linux compiler, compile itself into .asm.
 
 $(BUILDDIR)/tc2.asm: $(BUILDDIR)/tc2_linux
 	echo Building $@
 	$(BUILDDIR)/tc2_linux < tc2.in
 
-$(BUILDDIR)/tc2_modern.bin: $(BUILDDIR)/tc2.asm
+# Using the modern assembler for Linux, assemble the English compiler's .asm into a .bin (there are undefined symbols that don't fail the build yet)
+
+$(BUILDDIR)/tc2.bin: $(BUILDDIR)/tc2.asm
 	echo Building $@
-	$(BUILDDIR)/tasm_modern_linux $(BUILDDIR)/tc2.asm $(BUILDDIR)/tc2_modern.bin
+	$(BUILDDIR)/tasm_modern_linux $(BUILDDIR)/tc2.asm $(BUILDDIR)/tc2.bin
 
 #$(BUILDDIR)/tc2.bin: $(BUILDDIR)/tc2.asm
 #	echo Building $@
 #	$(BUILDDIR)/tasm_linux < tc2_bin.in
 
+# Using the English Linux compiler, compile the assembler into .asm
+
 $(BUILDDIR)/tasm.asm: $(BUILDDIR)/tc2_linux
 	echo Building $@
 	$(BUILDDIR)/tc2_linux < tasm.in
 
-#$(BUILDDIR)/tasm.bin: $(BUILDDIR)/tasm.asm
-#	echo Building $@
-#	$(BUILDDIR)/tasm_linux < tasm_bin.in
+# Using the modern assembler for Linux, assemble the assembler's .asm into a .bin.
 
-$(BUILDDIR)/tasm_modern.bin: $(BUILDDIR)/tasm.asm
+$(BUILDDIR)/tasm.bin: $(BUILDDIR)/tasm.asm
 	echo Building $@
-	$(BUILDDIR)/tasm_modern_linux $(BUILDDIR)/tasm.asm $(BUILDDIR)/tasm_modern.bin
+	$(BUILDDIR)/tasm_modern_linux $(BUILDDIR)/tasm.asm $(BUILDDIR)/tasm.bin
 
 #$(BUILDDIR)/tasm.bin: $(BUILDDIR)/tasm.asm
 #	echo Building $@

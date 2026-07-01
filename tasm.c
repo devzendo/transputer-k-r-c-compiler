@@ -812,7 +812,7 @@ read_input(addr, size) char *addr; int size; {
       putchar(8);
       --cur;
       continue;
-    } else if(ch == 10 || ch == 13) {
+    } else if(ch == 10 | ch == 13) {
       puts("\r\n");
       *cur = 0;
       return;

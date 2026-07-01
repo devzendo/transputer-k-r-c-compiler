@@ -72,7 +72,7 @@ $(BUILDDIR)/iserverstdio.asm: $(BUILDDIR)/tc2_linux
 
 $(BUILDDIR)/tc2.bin: $(BUILDDIR)/tc2.asm
 	echo Building $@
-	$(BUILDDIR)/tasm_modern_linux $(BUILDDIR)/tc2.asm $(BUILDDIR)/tc2.bin
+	$(BUILDDIR)/tasm_modern_linux $(BUILDDIR)/tc2.asm $(BUILDDIR)/tc2.bin $(BUILDDIR)/iserverstdio.asm
 
 #$(BUILDDIR)/tc2.bin: $(BUILDDIR)/tc2.asm
 #	echo Building $@
@@ -88,7 +88,7 @@ $(BUILDDIR)/tasm.asm: $(BUILDDIR)/tc2_linux
 
 $(BUILDDIR)/tasm.bin: $(BUILDDIR)/tasm.asm
 	echo Building $@
-	$(BUILDDIR)/tasm_modern_linux $(BUILDDIR)/tasm.asm $(BUILDDIR)/tasm.bin
+	$(BUILDDIR)/tasm_modern_linux $(BUILDDIR)/tasm.asm $(BUILDDIR)/tasm.bin  $(BUILDDIR)/iserverstdio.asm
 
 #$(BUILDDIR)/tasm.bin: $(BUILDDIR)/tasm.asm
 #	echo Building $@

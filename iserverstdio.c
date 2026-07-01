@@ -44,6 +44,11 @@ fputc(c, file)
 
 }
 
+/* int */ getchar()
+{
+
+}
+
 gets(buf)
     char *buf;
 {
@@ -52,6 +57,12 @@ gets(buf)
 
 putchar(ch)
     char ch;
+{
+
+}
+
+puts(buf)
+    char *buf;
 {
 
 }

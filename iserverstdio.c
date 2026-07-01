@@ -24,7 +24,7 @@ fclose(file)
 
 }
 
-/* char */ fgetc()
+/* char */ fgetc(file)
     char *file;
 {
 

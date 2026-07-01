@@ -19,12 +19,12 @@ BUILDDIR = build
 ALL = $(BUILDDIR)/tc2_linux \
 		$(BUILDDIR)/tc2_es_orig_linux \
 		$(BUILDDIR)/tasm_modern_linux \
-		$(BUILDDIR)/tasm_linux \
 		$(BUILDDIR)/tc2.asm \
 		$(BUILDDIR)/tc2_modern.bin \
 		$(BUILDDIR)/tasm.asm \
 		$(BUILDDIR)/tasm_modern.bin
 
+#		$(BUILDDIR)/tasm_linux \
 #		$(BUILDDIR)/tc2.bin \
 #		$(BUILDDIR)/tasm.bin
 
@@ -43,9 +43,9 @@ $(BUILDDIR)/tc2_es_orig_linux: tc2_es_orig.c | $(BUILDDIR)
 	echo Building $@
 	$(CC) $(CFLAGS) -o $@ $<
 
-$(BUILDDIR)/tasm_linux: tasm.c | $(BUILDDIR)
-	echo Building $@
-	$(CC) $(CFLAGS) -o $@ $<
+#$(BUILDDIR)/tasm_linux: tasm.c | $(BUILDDIR)
+#	echo Building $@
+#	$(CC) $(CFLAGS) -o $@ $<
 
 $(BUILDDIR)/tasm_modern_linux: tasm_modern.c | $(BUILDDIR)
 	echo Building $@

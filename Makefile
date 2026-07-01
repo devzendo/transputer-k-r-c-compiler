@@ -21,6 +21,7 @@ ALL = $(BUILDDIR)/tc2_linux \
 		$(BUILDDIR)/tasm_modern_linux \
 		$(BUILDDIR)/tc2.asm \
 		$(BUILDDIR)/tasm.asm \
+		$(BUILDDIR)/iserverstdio.asm \
 		$(BUILDDIR)/tc2.bin \
 		$(BUILDDIR)/tasm.bin
 

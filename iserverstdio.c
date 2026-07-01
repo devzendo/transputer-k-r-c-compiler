@@ -12,30 +12,46 @@
 //
 //--------------------------------------------------------------------------- */
 
-exit(int code) {
+exit(code)
+    int code;
+{
 
 }
 
-fclose(char* file) {
+fclose(file)
+    char* file;
+{
 
 }
 
-/* char */ fgetc(char *file) {
+/* char */ fgetc()
+    char *file;
+{
 
 }
 
-fputc(char c, char* file) {
+fputc(c, file)
+    char c;
+    char* file;
+{
 
 }
 
-/* char * */ fopen(char *filename, char *mode) {
+/* char * */ fopen(filename, mode)
+    char *filename;
+    char *mode;
+{
 
 }
 
-gets(char *buf) {
+gets(buf)
+    char *buf;
+{
 
 }
 
-putchar(char ch) {
+putchar(ch)
+    char ch;
+{
 
 }

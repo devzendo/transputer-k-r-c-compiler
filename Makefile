@@ -67,7 +67,7 @@ $(BUILDDIR)/tc2.asm: $(BUILDDIR)/tc2_linux
 $(BUILDDIR)/iserverstdio.asm: $(BUILDDIR)/tc2_linux
 	echo Building $@
 	$(BUILDDIR)/tc2_linux < iserverstdio.in
-	cat $(BUILDDIR)/iserverstdio.asmx | egrep -v '^(START:|j ENTRY)$' | sed '/ENTRY:/Q' > $(BUILDDIR)/iserverstdio.asm
+	cat $(BUILDDIR)/iserverstdio.asmx | egrep -v "^(START:|j ENTRY)$" | sed "/ENTRY:/Q" > $(BUILDDIR)/iserverstdio.asm
 
 # Using the modern assembler for Linux, assemble the English compiler's .asm into a .bin (there are undefined symbols that don't fail the build yet)
 

@@ -236,7 +236,10 @@ int main(int argc, char *argv[])
     else
         library_file = NULL;
     assemble();
-    exit(0);
+    if (errors_detected == 0) {
+        exit(0);
+    }
+    exit(1);
 }
 
 /*
@@ -1055,6 +1058,7 @@ void widen_pass(void)
         val = eval_expr();
         if (parse_err) {
             error("Undefined label", undef_label);
+            errors_detected++;
             val = 0;
         }
         if (op == 16) {

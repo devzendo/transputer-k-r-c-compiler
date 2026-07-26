@@ -67,7 +67,12 @@ $(BUILDDIR)/tc2.asm: $(BUILDDIR)/tc2_linux
 $(BUILDDIR)/iserverstdio.asm: $(BUILDDIR)/tc2_linux
 	echo Building $@
 	$(BUILDDIR)/tc2_linux < iserverstdio.in
+	# The compiler adds these START, j ENTRY and ENTRY: sections to every
+	# output, assuming it's a 'main', which we don't want for a 'library' we
+	# include in real 'main's.
 	cat $(BUILDDIR)/iserverstdio.asmx | egrep -v "^(START:|j ENTRY)" | sed '/ENTRY:/,$$d' > $(BUILDDIR)/iserverstdio.asm
+	# The .asmx file is a temporary, and can be removed.
+	rm $(BUILDDIR)/iserverstdio.asmx
 
 # Using the modern assembler for Linux, assemble the English compiler's .asm into a .bin (there are undefined symbols that don't fail the build yet)
 

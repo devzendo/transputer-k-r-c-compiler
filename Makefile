@@ -23,7 +23,9 @@ ALL = $(BUILDDIR)/tc2_linux \
 		$(BUILDDIR)/tasm.asm \
 		$(BUILDDIR)/iserverstdio.asm \
 		$(BUILDDIR)/tc2.bin \
-		$(BUILDDIR)/tasm.bin
+		$(BUILDDIR)/tasm.bin \
+		$(BUILDDIR)/iserver_putchar_example.asm \
+		$(BUILDDIR)/iserver_putchar_example.bin
 
 #		$(BUILDDIR)/tasm_linux \
 #		$(BUILDDIR)/tc2.bin \
@@ -99,6 +101,17 @@ $(BUILDDIR)/tasm.bin: $(BUILDDIR)/tasm.asm
 #$(BUILDDIR)/tasm.bin: $(BUILDDIR)/tasm.asm
 #	echo Building $@
 #	$(BUILDDIR)/tasm_linux $(BUILDDIR)/tasm.asm $(BUILDDIR)/tasm.bin
+
+# Examples
+
+$(BUILDDIR)/iserver_putchar_example.asm: $(BUILDDIR)/tc2_linux
+	echo Compiling $@
+	echo 'Y\nY\niserver_putchar_example.c\nbuild/iserver_putchar_example.asm\n\n' | $(BUILDDIR)/tc2_linux 
+
+$(BUILDDIR)/iserver_putchar_example.bin: $(BUILDDIR)/iserver_putchar_example.asm
+	echo Building $@
+	$(BUILDDIR)/tasm_modern_linux $(BUILDDIR)/iserver_putchar_example.asm $(BUILDDIR)/iserver_putchar_example.bin $(BUILDDIR)/iserverstdio.asm
+
 
 
 clean:

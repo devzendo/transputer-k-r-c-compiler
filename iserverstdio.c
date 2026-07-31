@@ -22,6 +22,11 @@
 #define LINK0_OUTPUT 0x80000000
 #define LINK0_INPUT  0x80000010
 
+_dummy() 
+{
+char *_library;
+    _library = "iserverstdio.c";
+}
 
 _send_iserver(bufptr, buflen)
     char *bufptr; /* local 3 */

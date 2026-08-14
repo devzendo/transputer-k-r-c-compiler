@@ -46,10 +46,29 @@ int inword; /* local 0 */
 #endasm
 }
 
+char _req_exit_buf[8];
 exit(code)
     int code;
 {
+    /* Always output as a little-endian word, LSB first MSB last */
+    _req_exit_buf[3] = (code & 0x000000ff);
+    _req_exit_buf[4] = ((code & 0x0000ff00) >> 8);
+    _req_exit_buf[5] = ((code & 0x00ff0000) >> 16);
+    _req_exit_buf[6] = ((code & 0xff000000) >> 24);
 
+    /* Initialise rest of message first time this is called. */
+    if (_req_exit_buf[0] != 0x06) {
+        _req_exit_buf[0] = 0x06;
+        _req_exit_buf[1] = 0x00;
+        _req_exit_buf[2] = REQ_EXIT;
+        /* [3..6] is the int code */
+        _req_exit_buf[7] = 0x00;
+    }
+    _send_iserver(_req_exit_buf, 8);
+    /* Terminate the emulator. Or (re-)start, if on embedded? */
+#asm
+    terminate
+#endasm
 }
 
 fclose(file)

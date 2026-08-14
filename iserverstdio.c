@@ -32,14 +32,14 @@ _send_iserver(bufptr, buflen)
     char *bufptr; /* local 3 */
     int buflen;   /* local 4 */
 {
-int inword; /* local 1 */
+int inword; /* local 0 */
 #asm
     ldl 3 ; bufptr
     ldc 0x80000000 ; LINK0_OUTPUT
     ldl 4 ; buflen
     out
     ; read and ignore the IServer response
-    ldlp 1 ; inword
+    ldlp 0 ; inword
     ldc 0x80000010 ; LINK0_INPUT
     ldc 4 ; a word's worth
     in

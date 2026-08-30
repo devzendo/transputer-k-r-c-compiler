@@ -26,7 +26,7 @@ The modifications are:
 It is part of the [Parachute Project](https://devzendo.github.io/parachute).
 
 ## Project Status
-Actively in development, last changes in July 2026.
+Actively in development, last changes in late August 2026.
 
 Started late April 2026. 
 
@@ -212,6 +212,10 @@ Nora Sandler for her blog posts, that eventually turned into the 'Writing a C
 Compiler' book - I've put that project (retro-c-compiler) on hold for a while.
 
 Brian Kernighan & the late Dennis Ritchie, of course!
+
+John Kennedy of Craic Design for the Opcodes iOS app - an indispensible reference of
+opcodes for many retrocomputing processors, including the Transputer. For more info
+see https://www.craicdesign.com/index.html and https://apps.apple.com/us/app/id6760205834 .
 
 # AI Declaration
 

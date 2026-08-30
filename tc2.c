@@ -105,7 +105,7 @@
 /* Define how to truncate a long name for the assembler */
 
 #define asmpref 7
-#define asmsuff 7
+#define asmsuff 7       /* MJG note: these are the same? */
 
 /* Reserve space for variables */
 
@@ -135,7 +135,7 @@ char *
 char *
     saveout;            /* Indicates redirect to console */
 
-int nxtlab,             /* Next available label */
+int nxtlab,             /* Next available label, c0,c1,c2...  */
     litlab,             /* Label for the string buffer */
     Zsp,                /* Compiler stack pointer */
     argstk,             /* Argument stack */
@@ -144,7 +144,7 @@ int nxtlab,             /* Next available label */
     errstop,            /* Whether to stop on error */
     eof,                /* Indicates end of input file */
     ctext,              /* Whether to include source in output */
-    cmode,              /* Whether currently compiling C */
+    cmode,              /* Whether currently compiling C (1) or assembler (0) */
     lastst,             /* Last statement executed */
     fnstart,            /* Starting line of the current function */
     lineno,             /* Line number in current file */
@@ -158,8 +158,8 @@ char *currfn,           /* Pointer to the definition of the current function */
 char quote[2];          /* Literal string for '"' */
 char *cptr;             /* Working pointer */
 int *iptr;              /* Working pointer */
-int global_pos;          /* Position for static variables */
-int use_expr;            /* Whether the expression result is used */
+int global_pos;         /* Position for static variables */
+int use_expr;           /* Whether the expression result is used */
 
 /*
 ** Compiler execution starts here.
@@ -189,7 +189,7 @@ main()
     saveout =           /* Output not yet redirected */
     NULL;
     quote[0] = '"';     /* Create a string with a quote */
-    global_pos = 2;
+    global_pos = 2;     /* Allocate two words for the static data zeroing counter */
     currfn = NULL;      /* No function yet */
     cmode = 1;          /* Enable preprocessing */
     openout();
@@ -480,6 +480,8 @@ declglb(typ)            /* typ is cchar or cint */
 */
 declloc() {
   int k, j, stack, typ;
+  /* k is the size of each variable in bytes */
+  /* j is either pointer, array or variable */
   char sname[namesize];
 
   stack = Zsp;
@@ -529,7 +531,7 @@ declloc() {
 }
 
 /*
-** Get the size of an array.
+** Get the size of an array (the subscript).
 **
 ** Called when a declaration is followed
 ** by "[".
@@ -541,7 +543,7 @@ needsub()
   if (match("]"))
     return 0;                   /* Zero size */
   if (number(num) == 0) {       /* Look for the number */
-    error("Must be a number");/* Not a number */
+    error("Must be a number");  /* Not a number */
     num[0] = 1;                 /* Force to 1 */
   }
   if (num[0] < 0) {
@@ -609,7 +611,7 @@ newfunc()
       if (findloc(n))
         multidef(n);
       else {
-        addloc(n, 0, 0, argstk + 2);
+        addloc(n, 0, 0, argstk + 2); /* MJG: why argstk + 2? */
         ++argstk;
       }
     } else {
@@ -687,10 +689,10 @@ getarg(t, top)                  /* Type = cchar or cint */
       }
       if (argptr = findloc(n)) {
 
-	/* Set the correct type for the argument */
+        /* Set the correct type for the argument */
 
-	argptr[ident] = j;
-	argptr[type] = t;
+        argptr[ident] = j;
+        argptr[type] = t;
 
       } else
         error("Argument name required");
@@ -912,7 +914,7 @@ junk()
   else
     while (an(ch()) == 0) {
       if (ch() == 0)
-	break;
+        break;
       gch();
     }
   blanks();
@@ -1046,7 +1048,7 @@ symname(sname)
     return 0;
   k = 0;
   while (an(ch()))
-    sname[k++] = gch();
+    sname[k++] = gch(); /* Does not take namesize into account */
   sname[k] = 0;
   return 1;
 }
@@ -1171,9 +1173,9 @@ in_line()
     kill();
     while ((k = fgetc(unit)) > 0) {
       if (k == 13)
-	continue;
+        continue;
       if ((k == eol) | (lidx >= linemax))
-	break;
+        break;
       line[lidx++] = k;
     }
     line[lidx] = 0;     /* Append a null character */
@@ -1181,15 +1183,15 @@ in_line()
     if (k <= 0) {
       fclose(unit);
       if (input2)
-	endinclude();
+        endinclude();
       else
-	input = 0;
+        input = 0;
     }
     if (lidx) {
       if (ctext & cmode) {
-	comment();
-	outstr(line);
-	nl();
+        comment();
+        outstr(line);
+        nl();
       }
       lidx = 0;
       return;
@@ -1210,6 +1212,7 @@ preprocess()
       pre_space();
     else if (ch() == '"')
       pre_quote();
+    /* ASCII 39 is apostrophe */
     else if (ch() == 39)
       pre_apos();
     else if ((ch() == '/') & (nch() == '*'))
@@ -1217,18 +1220,18 @@ preprocess()
     else if (alpha(ch())) {
       k = 0;
       while (an(ch())) {
-	if (k < namemax)
-	  sname[k++] = ch();
-	gch();
+        if (k < namemax)
+          sname[k++] = ch();
+        gch();
       }
       sname[k] = 0;
       if (k = findmac(sname))
-	while (c = macq[k++])
-	  keepch(c);
+        while (c = macq[k++])
+          keepch(c);
       else {
-	k = 0;
-	while (c = sname[k++])
-	  keepch(c);
+        k = 0;
+        while (c = sname[k++])
+          keepch(c);
       }
     } else
       keepch(gch());
@@ -1262,6 +1265,7 @@ pre_quote()
 {
   keepch(ch());
   gch();
+  /* ASCII 92 is backslash */
   while ((ch() != '"') | ((line[lidx - 1] == 92) & (line[lidx - 2] != 92))) {
     if (ch() == 0) {
       error("Missing closing quote");
@@ -1277,6 +1281,7 @@ pre_apos()
 {
   keepch(39);
   gch();
+  /* ASCII 92 is backslash; 39 is apostrophe */
   while ((ch() != 39) | ((line[lidx - 1] == 92) & (line[lidx - 2] != 92))) {
     if (ch() == 0) {
       error("Missing apostrophe");
@@ -1536,7 +1541,7 @@ blanks()
       in_line();
       preprocess();
       if (eof)
-	break;
+        break;
     }
     if (ch() == ' ')
       gch();
@@ -1890,14 +1895,14 @@ heir7(lval)
     left = last_node;
     if (match(">>")) {
       if (heir8(lval2))
-	rvalue(lval2);
+        rvalue(lval2);
       if((oper[left] == N_CONST) & (oper[last_node] == N_CONST))
         make_node(N_CONST, 0, 0, stk[left] >> stk[last_node]);
       else
         make_node(N_CD, left, last_node, 0);
     } else if (match("<<")) {
       if (heir8(lval2))
-	rvalue(lval2);
+        rvalue(lval2);
       if((oper[left] == N_CONST) & (oper[last_node] == N_CONST))
         make_node(N_CONST, 0, 0, stk[left] << stk[last_node]);
       else
@@ -2879,7 +2884,9 @@ header()
   ol("j ENTRY");
 }
 
-/* Emit the epilogue for the generated code. */
+/* Emit the epilogue for the generated code.
+ * This zeroes out the static data area (global_pos words long).
+ */
 trailer()
 {
   nl();
@@ -2889,6 +2896,12 @@ trailer()
   outasm("ENTRY");
   col();
   nl();
+  /*
+   * Workspace needs increasing from the end of the loaded code by global_pos.
+   * [0] loop address: starts as address of second workspace entry
+   * [1] number of words in data (global_pos) - 2 (presumably these two words)
+   * [2] <this area is zeroed>
+   */
   ins("ajw ", -global_pos);
   if (global_pos > 2) {
     ol("ldlp 2");
@@ -2900,11 +2913,11 @@ trailer()
     nl();
     ol("ldc 0");
     ol("ldl 0");
-    ol("stnl 0");
-    ol("ldl 0");
+    ol("stnl 0"); //  &w[2...] = 0
+    ol("ldl 0"); // w[0]++
     ol("adc 4");
     ol("stl 0");
-    ol("ldl 1");
+    ol("ldl 1"); // w[1]--
     ol("adc -1");
     ol("stl 1");
     ol("ldl 1");

@@ -24,8 +24,6 @@
 #define FILE_STDOUT 1
 #define FILE_STDERR 2
 
-#define STDOUT_STREAMID 0x01
-
 /* The IServer is fixed on Link 0 for now */
 #define LINK0_OUTPUT 0x80000000
 #define LINK0_INPUT  0x80000010
@@ -35,6 +33,8 @@ _dummy()
 char *_library;
     _library = "iserverstdio.c";
 }
+
+/* Internal I/O words ------------------------------------------------------- */
 
 /* Send a buffer and wait for a response */
 _send_is_r(bufptr, buflen)
@@ -69,7 +69,7 @@ _send_is(bufptr, buflen)
 }
 
 /* Wait for a response word */
-_recv_is_i()
+_recv_is_word()
 {
     int inword; /* local 0 */
 #asm
@@ -81,6 +81,7 @@ _recv_is_i()
 #endasm
 }
 
+/* Send a single byte */
 _send_is_byte(by)
     int by; /* local 2 */
 {
@@ -91,6 +92,7 @@ _send_is_byte(by)
 #endasm
 }
 
+/* Send both bytes of a short, LSB first */
 _send_is_short(sh)
     int sh;
 {
@@ -98,6 +100,7 @@ _send_is_short(sh)
     _send_is_byte((sh & 0x0000ff00) >> 8);
 }
 
+/* Send four bytes of a word, LSB first */
 _send_is_word(word)
     int word; /* local 2 */
 {
@@ -108,7 +111,23 @@ _send_is_word(word)
 #endasm
 }
 
+/* Utility routines --------------------------------------------------------- */
 
+/* TODO Move this to string.c later */
+strlen(cad)
+    char *cad;
+{
+    char *ori;
+    ori = cad;
+    while (*cad) ++cad;
+    return (cad - ori);
+}
+
+/* Main stdio routines ------------------------------------------------------ */
+
+/* Send an exit status word to the IServer, requesting it to end, reporting
+ * this status to the OS. Ignore response.
+ */
 char _req_exit_buf[8];
 exit(code)
     int code;
@@ -171,6 +190,10 @@ gets(buf)
 
 }
 
+/* Send a single character to the IServer to display on its stdout. Ignore response.
+ * Note that this is an extended IServer protocol
+ * frame, not present in the original Inmos IServer.
+ */
 char _req_putchar_buf[8];
 putchar(ch)
     char ch;
@@ -190,16 +213,11 @@ putchar(ch)
     _send_is_r(_req_putchar_buf, 8);
 }
 
-/* TODO Move this to string.c later */
-strlen(cad)
-    char *cad;
-{
-    char *ori;
-    ori = cad;
-    while (*cad) ++cad;
-    return (cad - ori);
-}
-
+/* Send a string of characters to the IServer to display on its stdout, with a line
+ * break automatically added. Ignore response.
+ * Note that the maximum frame length the IServer supports is 512, and the framing
+ * overhead gives a maximum string length that this routine supports as 505 bytes.*
+ */
 puts(buf)
     char *buf;
 {
@@ -232,5 +250,5 @@ int odd;
     if (!odd) {
         _send_is_byte(0);
     }
-    _recv_is_i();
+    _recv_is_word();
 }

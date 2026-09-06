@@ -43,6 +43,8 @@ $(BUILDDIR):
 $(BUILDDIR)/tc2_linux: tc2.c | $(BUILDDIR)
 	echo Building $@
 	$(CC) $(CFLAGS) -o $@ $<
+	echo ""
+	echo ""
 
 $(BUILDDIR)/tc2_es_orig_linux: tc2_es_orig.c | $(BUILDDIR)
 	echo Building $@
@@ -57,12 +59,16 @@ $(BUILDDIR)/tc2_es_orig_linux: tc2_es_orig.c | $(BUILDDIR)
 $(BUILDDIR)/tasm_modern_linux: tasm_modern.c | $(BUILDDIR)
 	echo Building $@
 	$(CC) -std=gnu99 -o $@ $<
+	echo ""
+	echo ""
 
 # Using the English Linux compiler, compile itself into .asm.
 
 $(BUILDDIR)/tc2.asm: $(BUILDDIR)/tc2_linux
 	echo Building $@
 	$(BUILDDIR)/tc2_linux < tc2.in
+	echo ""
+	echo ""
 
 # Using the English Linux compiler, compile iserverstdio.c into .asm.
 
@@ -75,12 +81,16 @@ $(BUILDDIR)/iserverstdio.asm: $(BUILDDIR)/tc2_linux
 	cat $(BUILDDIR)/iserverstdio.asmx | egrep -v "^(START:|j ENTRY)" | sed '/ENTRY:/,$$d' > $(BUILDDIR)/iserverstdio.asm
 	# The .asmx file is a temporary, and can be removed.
 	rm $(BUILDDIR)/iserverstdio.asmx
+	echo ""
+	echo ""
 
 # Using the modern assembler for Linux, assemble the English compiler's .asm into a .bin (there are undefined symbols that don't fail the build yet)
 
 $(BUILDDIR)/tc2.bin: $(BUILDDIR)/tc2.asm
 	echo Building $@
 	$(BUILDDIR)/tasm_modern_linux $(BUILDDIR)/tc2.asm $(BUILDDIR)/tc2.bin $(BUILDDIR)/iserverstdio.asm
+	echo ""
+	echo ""
 
 #$(BUILDDIR)/tc2.bin: $(BUILDDIR)/tc2.asm
 #	echo Building $@
@@ -91,12 +101,16 @@ $(BUILDDIR)/tc2.bin: $(BUILDDIR)/tc2.asm
 $(BUILDDIR)/tasm.asm: $(BUILDDIR)/tc2_linux
 	echo Building $@
 	$(BUILDDIR)/tc2_linux < tasm.in
+	echo ""
+	echo ""
 
 # Using the modern assembler for Linux, assemble the assembler's .asm into a .bin.
 
 $(BUILDDIR)/tasm.bin: $(BUILDDIR)/tasm.asm
 	echo Building $@
 	$(BUILDDIR)/tasm_modern_linux $(BUILDDIR)/tasm.asm $(BUILDDIR)/tasm.bin  $(BUILDDIR)/iserverstdio.asm
+	echo ""
+	echo ""
 
 #$(BUILDDIR)/tasm.bin: $(BUILDDIR)/tasm.asm
 #	echo Building $@
@@ -107,10 +121,14 @@ $(BUILDDIR)/tasm.bin: $(BUILDDIR)/tasm.asm
 $(BUILDDIR)/iserver_putchar_example.asm: $(BUILDDIR)/tc2_linux
 	echo Compiling $@
 	echo 'Y\nY\niserver_putchar_example.c\nbuild/iserver_putchar_example.asm\n\n' | $(BUILDDIR)/tc2_linux 
+	echo ""
+	echo ""
 
 $(BUILDDIR)/iserver_putchar_example.bin: $(BUILDDIR)/iserver_putchar_example.asm
 	echo Building $@
 	$(BUILDDIR)/tasm_modern_linux $(BUILDDIR)/iserver_putchar_example.asm $(BUILDDIR)/iserver_putchar_example.bin $(BUILDDIR)/iserverstdio.asm
+	echo ""
+	echo ""
 
 
 

@@ -2913,11 +2913,11 @@ trailer()
     nl();
     ol("ldc 0");
     ol("ldl 0");
-    ol("stnl 0"); //  &w[2...] = 0
-    ol("ldl 0"); // w[0]++
+    ol("stnl 0"); /* &w[2...] = 0  */
+    ol("ldl 0");  /* w[0]++        */
     ol("adc 4");
     ol("stl 0");
-    ol("ldl 1"); // w[1]--
+    ol("ldl 1");  /* w[1]--        */
     ol("adc -1");
     ol("stl 1");
     ol("ldl 1");

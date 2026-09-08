@@ -21,12 +21,12 @@ The modifications are:
 * Modifications to allow the tools to be first built on a 32-bit Linux system, running
   Debian Bookworm.
 * Enhancements to work with the Parachute IServer.
-
+* Bugfix: When errors are detected in the compiler, it exits with status 1.
 
 It is part of the [Parachute Project](https://devzendo.github.io/parachute).
 
 ## Project Status
-Actively in development, last changes in late August 2026.
+Actively in development, last changes in September 2026.
 
 Started late April 2026. 
 
@@ -169,7 +169,7 @@ Since the assembly of a complex program is essentially identical between the
 original Spanish version and the translated English version, I conclude
 that the AI translation has been successful, and has not adversely
 affected the operation of the compiler in any way, other than translating
-symbols, messages and comments..
+symbols, messages and comments.
 
 
 

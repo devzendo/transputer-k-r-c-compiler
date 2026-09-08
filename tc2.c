@@ -201,6 +201,9 @@ main()
     closeout();
     errorsummary();
     openin();
+    if (errcnt != 0) {
+      exit(1);
+    }
   }
 }
 

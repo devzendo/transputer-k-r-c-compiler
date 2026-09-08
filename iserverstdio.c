@@ -13,6 +13,7 @@
 //--------------------------------------------------------------------------- */
 
 /* IServer frame tags */
+#define REQ_GETS    14
 #define REQ_PUTS    15
 #define REQ_POLLKEY 31
 #define REQ_EXIT    35
@@ -81,6 +82,20 @@ _recv_is_word()
 #endasm
 }
 
+/* Read a number of bytes into the buffer at bufptr */
+_recv_buf(bufptr, buflen)
+    char *bufptr; /* local 2? */
+    int buflen;   /* local 3? */
+{
+#asm
+    ; need a len, b link, c buf
+    ldl 2 ; a bufptr
+    ldc 0x80000010 ; LINK0_INPUT a link, b, bufptr
+    ldl 3 ; a buflen b link c bufptr
+    in
+#endasm
+}
+
 /* Send a single byte */
 _send_is_byte(by)
     int by; /* local 2 */
@@ -121,6 +136,12 @@ strlen(cad)
     ori = cad;
     while (*cad) ++cad;
     return (cad - ori);
+}
+
+_short_at(bufptr)
+    char *bufptr;
+{
+    return bufptr[0] + (bufptr[1] << 8);
 }
 
 /* Main stdio routines ------------------------------------------------------ */
@@ -184,10 +205,41 @@ fputc(c, file)
 
 }
 
+/* buf should be at least 507+1 bytes long, as that's the maximum that the IServer will return (unless a LF or EOF is
+ * encountered. +1 for null termination, that this function adds. If the input string is terminated by LF, this is not
+ * stored. Any CR in the input is ignored and not returned by the IServer.
+ */
+char _gets_buf[10]; /* ldl 1; ldnlp 4 */
 gets(buf)
-    char *buf;
+    char *buf; /* ldl 2 */
 {
-
+    int length;
+    /* Reuse request buffer for the size/status of the response. If successful, read the data into buf. */
+    _gets_buf[0] = 0x08; /* Frame length */
+    _gets_buf[1] = 0x00;
+    _gets_buf[2] = REQ_GETS;
+    _gets_buf[3] = 0x00; /* STDIN */
+    _gets_buf[4] = 0x00;
+    _gets_buf[5] = 0x00;
+    _gets_buf[6] = 0x00;
+    _gets_buf[7] = 0xFB; /* Max len 507 */
+    _gets_buf[8] = 0x01;
+    _gets_buf[9] = 0x00; /* Padding */
+    _send_is(_gets_buf, 10);
+    _recv_buf(_gets_buf, 3); /* Overwrite the frame length and status: 2 bytes frame length, 1 byte status */
+    if (_gets_buf[2] == 0x00) {
+        /* Success. Ignore frame length - there's a valid string length coming. Read its 2 bytes into _gets_buf[0,1] */
+        _recv_buf(_gets_buf, 2);
+        /* Now read that length into buf */
+        length = _short_at(_gets_buf);
+        _recv_buf(buf, length);
+        /* Null terminate */
+        buf[length] = '\0';
+        return buf;
+    } else {
+        /* Error. */
+        return 0;
+    }
 }
 
 /* Send a single character to the IServer to display on its stdout. Ignore response.

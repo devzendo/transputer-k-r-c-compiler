@@ -82,6 +82,19 @@ _recv_is_word()
 #endasm
 }
 
+/* Wait for a response byte */
+_recv_is_byte()
+{
+    int inbyte; /* local 0 */
+#asm
+    ldlp 0 ; inbyte
+    ldc 0x80000010 ; LINK0_INPUT
+    ldc 1 ; just one byte
+    in
+#endasm
+    return inbyte;
+}
+
 /* Read a number of bytes into the buffer at bufptr */
 _recv_buf(bufptr, buflen)
     char *bufptr; /* local 2? */
@@ -214,6 +227,7 @@ gets(buf)
     char *buf; /* ldl 2 */
 {
     int length;
+    int read_length;
     /* Reuse request buffer for the size/status of the response. If successful, read the data into buf. */
     _gets_buf[0] = 0x08; /* Frame length */
     _gets_buf[1] = 0x00;
@@ -229,14 +243,20 @@ gets(buf)
     _recv_buf(_gets_buf, 3); /* Overwrite the frame length and status: 2 bytes frame length, 1 byte status */
     if (_gets_buf[2] == 0x00) {
         /* Success. Ignore frame length - there's a valid string length coming. Read its 2 bytes into _gets_buf[0,1] */
-        _recv_buf(_gets_buf, 2);
+        _recv_buf(_gets_buf, 2); /* 5 bytes (odd) so far) */
         /* Now read that length into buf */
-        length = _short_at(_gets_buf);
-        _recv_buf(buf, length);
+        read_length = length = _short_at(_gets_buf);
+        /* if length is even, we'll have a byte of padding to read as well */
+        if ((length & 0x0001) == 0x0000) {
+            read_length++;
+        }
+        _recv_buf(buf, read_length);
         /* Null terminate */
         buf[length] = '\0';
         return buf;
     } else {
+        /* Need to get the final byte of padding after frame len and tag */
+        _recv_is_byte();
         /* Error. */
         return 0;
     }

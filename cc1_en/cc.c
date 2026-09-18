@@ -14,9 +14,9 @@
 
 #include <stdio.h>
 
-#include "CCvars.c"    /* Variables y definiciones.           */
-#include "CCinter.c"   /* Interfaz con el usuario.            */
-#include "CCanasin.c"  /* Análisis sintáctico de alto nivel.  */
-#include "CCvarios.c"  /* Funciones de soporte.               */
-#include "CCexpr.c"    /* Análisis sintáctico de expresiones. */
-#include "CCgencod.c"  /* Generador de codigo.                */
+#include "ccvars.c"    /* Variables y definiciones.           */
+#include "ccinter.c"   /* Interfaz con el usuario.            */
+#include "ccanasin.c"  /* Análisis sintáctico de alto nivel.  */
+#include "ccvarios.c"  /* Funciones de soporte.               */
+#include "ccexpr.c"    /* Análisis sintáctico de expresiones. */
+#include "ccgencod.c"  /* Generador de codigo.                */

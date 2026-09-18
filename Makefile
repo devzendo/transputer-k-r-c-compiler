@@ -16,6 +16,17 @@ CFLAGS  = -std=gnu90 \
 
 BUILDDIR = build
 
+# Register all subdirectories in the project's root directory.
+SUBDIRS := cc1_en
+
+# Recurse `make` into each subdirectory.
+$(SUBDIRS): FORCE | $(BUILDDIR)
+	$(MAKE) -C $@
+
+# A target without prerequisites and a recipe, and there is no file named `FORCE`.
+# `make` will always run this and any other target that depends on it.
+FORCE:
+
 ALL = $(BUILDDIR)/tc2_linux \
 		$(BUILDDIR)/tc2_es_orig_linux \
 		$(BUILDDIR)/tasm_modern_linux \
@@ -25,7 +36,8 @@ ALL = $(BUILDDIR)/tc2_linux \
 		$(BUILDDIR)/tc2.bin \
 		$(BUILDDIR)/tasm.bin \
 		$(BUILDDIR)/iserver_putchar_example.asm \
-		$(BUILDDIR)/iserver_putchar_example.bin
+		$(BUILDDIR)/iserver_putchar_example.bin \
+		$(BUILDDIR)/cc1_native
 
 #		$(BUILDDIR)/tasm_linux \
 #		$(BUILDDIR)/tc2.bin \
@@ -33,7 +45,7 @@ ALL = $(BUILDDIR)/tc2_linux \
 
 .PHONY: all clean
 
-all: $(BUILDDIR) $(ALL)
+all: $(BUILDDIR) $(ALL) $(SUBDIRS)
 
 $(BUILDDIR):
 	mkdir -p $(BUILDDIR)
@@ -134,15 +146,4 @@ $(BUILDDIR)/iserver_putchar_example.bin: $(BUILDDIR)/iserver_putchar_example.asm
 
 clean:
 	rm -rf $(BUILDDIR)
-
-# Register all subdirectories in the project's root directory.
-SUBDIRS := cc1_en
-
-# Recurse `make` into each subdirectory.
-$(SUBDIRS): FORCE
-	$(MAKE) -C $@
-
-# A target without prerequisites and a recipe, and there is no file named `FORCE`.
-# `make` will always run this and any other target that depends on it.
-FORCE:
 

@@ -32,6 +32,9 @@ BUILDDIR = ../build
 
 ALL = $(BUILDDIR)/cc1_native
 
+$(BUILDDIR):
+	mkdir -p $(BUILDDIR)
+
 # Build the English compiler (cc1_en) for the native platform.
 
 $(BUILDDIR)/cc1_native: cc.c | $(BUILDDIR)

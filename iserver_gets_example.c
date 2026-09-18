@@ -1,7 +1,7 @@
-
+/* This crashes. Don't know why. */
+char line[512];
 main()
 {
-  char line[512];
   char *p;
 
   line[0] = '\0';

@@ -1,4 +1,4 @@
-
+/* This works */
 main()
 {
   char *p;

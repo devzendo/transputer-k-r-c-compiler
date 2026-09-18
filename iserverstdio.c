@@ -15,6 +15,7 @@
 /* IServer frame tags */
 #define REQ_GETS    14
 #define REQ_PUTS    15
+#define REQ_GETKEY  30
 #define REQ_POLLKEY 31
 #define REQ_EXIT    35
 
@@ -92,7 +93,7 @@ _recv_is_byte()
     ldc 1 ; just one byte
     in
 #endasm
-    return inbyte;
+    return inbyte & 0xff;
 }
 
 /* Read a number of bytes into the buffer at bufptr */
@@ -114,9 +115,11 @@ _send_is_byte(by)
     int by; /* local 2 */
 {
 #asm
-    ldc 0x80000000 ; LINK0_OUTPUT
-    ldl 2 ; by
-    outbyte
+    ldlp 2 ; &by addr
+    ; areg addr
+    ldc 0x80000000 ; LINK0_OUTPUT ; areg link, breg addr
+    ldc 1 ; single byte - areg length, breg link, creg addr
+    out
 #endasm
 }
 
@@ -133,9 +136,10 @@ _send_is_word(word)
     int word; /* local 2 */
 {
 #asm
+    ldlp 2 ; word
     ldc 0x80000000 ; LINK0_OUTPUT
-    ldl 2 ; word
-    outword
+    ldc 4 ; all of the word
+    out
 #endasm
 }
 
@@ -162,24 +166,21 @@ _short_at(bufptr)
 /* Send an exit status word to the IServer, requesting it to end, reporting
  * this status to the OS. Ignore response.
  */
-char _req_exit_buf[8];
 exit(code)
     int code;
 {
+    char _req_exit_buf[8];
+    /* Initialise rest of message first time this is called. */
+    _req_exit_buf[0] = 0x06;
+    _req_exit_buf[1] = 0x00;
+    _req_exit_buf[2] = REQ_EXIT;
+    /* [3..6] is the int code */
     /* Always output as a little-endian word, LSB first MSB last */
     _req_exit_buf[3] = (code & 0x000000ff);
     _req_exit_buf[4] = ((code & 0x0000ff00) >> 8);
     _req_exit_buf[5] = ((code & 0x00ff0000) >> 16);
     _req_exit_buf[6] = ((code & 0xff000000) >> 24);
-
-    /* Initialise rest of message first time this is called. */
-    if (_req_exit_buf[0] != 0x06) {
-        _req_exit_buf[0] = 0x06;
-        _req_exit_buf[1] = 0x00;
-        _req_exit_buf[2] = REQ_EXIT;
-        /* [3..6] is the int code */
-        _req_exit_buf[7] = 0x00;
-    }
+    _req_exit_buf[7] = 0x00;
     _send_is_r(_req_exit_buf, 8);
     /* Terminate the emulator. Or (re-)start, if on embedded? */
 #asm
@@ -215,19 +216,42 @@ fputc(c, file)
 
 /* int */ getchar()
 {
-
+    char _getchar_buf[8]; /* ldl 1; ldnlp 4 */
+    /* Reuse request buffer for the size/status of the response. If successful, read the data into buf. */
+    _getchar_buf[0] = 0x06; /* Frame length */
+    _getchar_buf[1] = 0x00;
+    _getchar_buf[2] = REQ_GETKEY;
+    _getchar_buf[3] = 0x00;
+    _getchar_buf[4] = 0x00;
+    _getchar_buf[5] = 0x00;
+    _getchar_buf[6] = 0x00;
+    _getchar_buf[7] = 0x00;
+    _send_is(_getchar_buf, 8);
+    /* works up to here - look at _recv_buf next */
+    _recv_buf(_getchar_buf, 3); /* Overwrite the frame length and status: 2 bytes frame length, 1 byte status */
+    if (_getchar_buf[2] == 0x00) {
+        /* Success. Ignore frame length, get one more byte (the key) */
+        return _recv_is_byte();
+    } else {
+        /* Inmos IServer & TDS doc don't produce/define any errors in this frame type. But our IServer can fail with a
+         * word of zeroes, and a byte of padding. */
+        _recv_is_word();
+        _recv_is_byte();
+        /* Error. */
+        return 0;
+    }
 }
 
 /* buf should be at least 507+1 bytes long, as that's the maximum that the IServer will return (unless a LF or EOF is
  * encountered. +1 for null termination, that this function adds. If the input string is terminated by LF, this is not
  * stored. Any CR in the input is ignored and not returned by the IServer.
  */
-char _gets_buf[10]; /* ldl 1; ldnlp 4 */
 gets(buf)
     char *buf; /* ldl 2 */
 {
     int length;
     int read_length;
+    char _gets_buf[10];
     /* Reuse request buffer for the size/status of the response. If successful, read the data into buf. */
     _gets_buf[0] = 0x08; /* Frame length */
     _gets_buf[1] = 0x00;
@@ -266,22 +290,18 @@ gets(buf)
  * Note that this is an extended IServer protocol
  * frame, not present in the original Inmos IServer.
  */
-char _req_putchar_buf[8];
 putchar(ch)
     char ch;
 {
+    char _req_putchar_buf[8];
+    _req_putchar_buf[0] = 0x06;
+    _req_putchar_buf[1] = 0x00;
+    _req_putchar_buf[2] = REQ_PUTCHAR;
     _req_putchar_buf[3] = ch;
-    /* Initialise rest of message first time this is called. */
-    if (_req_putchar_buf[0] != 0x06) {
-        _req_putchar_buf[0] = 0x06;
-        _req_putchar_buf[1] = 0x00;
-        _req_putchar_buf[2] = REQ_PUTCHAR;
-        /* [3] is the char ch */
-        _req_putchar_buf[4] = 0x00;
-        _req_putchar_buf[5] = 0x00;
-        _req_putchar_buf[6] = 0x00;
-        _req_putchar_buf[7] = 0x00;
-    }
+    _req_putchar_buf[4] = 0x00;
+    _req_putchar_buf[5] = 0x00;
+    _req_putchar_buf[6] = 0x00;
+    _req_putchar_buf[7] = 0x00;
     _send_is_r(_req_putchar_buf, 8);
 }
 

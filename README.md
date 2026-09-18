@@ -1,9 +1,12 @@
 # transputer-k-r-c-compiler
 
 ## What is this?
-A Small-C compiler and assembler, targetting the Transputer. It was written by
-Óscar Toledo Gutiérrez for his emulation and OS project, between 1993-1996. It
-is based on the Small-C compiler by Ron Cain, which was published in Dr. Dobbs'
+A Small-C compiler and assemblers, targetting the Transputer.
+It is part of the [Parachute Project](https://devzendo.github.io/parachute).
+
+### 'Ron Cain' Small-C Compiler tc2 and tasm/tasm_modern
+It was written by Óscar Toledo Gutiérrez for his emulation and OS project, between 1993-1996.
+It is based on the Small-C compiler by Ron Cain, which was published in Dr. Dobbs'
 journal vol 5 no 45 - the full volume of which may be found
 at https://archive.org/details/dr_dobbs_journal_vol_05_201803/page/n189/mode/2up
 A copy of just the Ron Cain article PDF may be found in this repository.
@@ -13,7 +16,7 @@ at https://nanochess.org/bootstrapping_c_os_transputer.html .
 The repository of his original whole system can be found
 at https://github.com/nanochess/transputer .
 
-This repository contains a copy of his compiler and assembler, modified by Matt Gumbley.
+This repository contains a copy of his compiler and assembler, modified by Matt Gumbley (files tc2*, tasm*).
 The modifications are:
 * Translation of messages, identifiers, comments etc. from Spanish to English. Matt does
   not speak Spanish, but the translations are being verified against the Ron Cain article.
@@ -23,7 +26,22 @@ The modifications are:
 * Enhancements to work with the Parachute IServer.
 * Bugfix: When errors are detected in the compiler, it exits with status 1.
 
-It is part of the [Parachute Project](https://devzendo.github.io/parachute).
+### 'James Hendrix Small-C Compiler' cc1
+The `cc1*` directories in this repository contain a copy of a later (1998) version of Óscar's compiler, documented in
+his article at https://nanochess.org/am29000_c_compiler_web_browser.html . In his repository, there are two variants of
+this compiler, cc0 (more like James Hendrix' Small-C than Ron Cain's), and cc1, which enhances the cc0 compiler with a
+dynamic expression tree generator using malloc/free. It was written to build using the DJGPP compiler on MSDOS.
+
+In this repository, the `cc1_es` directory contains a copy of Óscar's cc1 compiler with no changes or translation.
+
+The `cc1_en` directory contains my attempt at porting this to the platforms I'm targetting with Parachute, and
+manual translation from Spanish to English.
+
+The modifications are:
+* Translation of messages from Spanish to English. I am attempting to translate this 'by hand' rather than by using
+  Claude, although I also use Google Translate which is now LLM-based.
+* Porting to the platforms supported by Parachute.
+
 
 ## Project Status
 Actively in development, last changes in September 2026.

@@ -135,3 +135,14 @@ $(BUILDDIR)/iserver_putchar_example.bin: $(BUILDDIR)/iserver_putchar_example.asm
 clean:
 	rm -rf $(BUILDDIR)
 
+# Register all subdirectories in the project's root directory.
+SUBDIRS := cc1_en
+
+# Recurse `make` into each subdirectory.
+$(SUBDIRS): FORCE
+	$(MAKE) -C $@
+
+# A target without prerequisites and a recipe, and there is no file named `FORCE`.
+# `make` will always run this and any other target that depends on it.
+FORCE:
+

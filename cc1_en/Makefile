@@ -14,7 +14,8 @@ CFLAGS  = -x c -std=gnu89 \
            -Wno-pointer-sign \
            -Wno-incompatible-library-redeclaration \
            -Wno-empty-body \
-           -Wno-macro-redefined
+           -Wno-macro-redefined \
+           -Wno-builtin-declaration-mismatch
 
 
 #            -Wno-implicit-function-declaration  # calls before declaration

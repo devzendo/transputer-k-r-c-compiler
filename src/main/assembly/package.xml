@@ -18,6 +18,8 @@
                 <include>tc2_linux</include>
                 <include>tasm_modern_linux</include>
                 -->
+                <!-- The 32-bit Intel Linux compiler, for now -->
+                <include>cc1_linux</include>
             </includes>
             <outputDirectory>bin</outputDirectory>
         </fileSet>

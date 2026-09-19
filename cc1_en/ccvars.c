@@ -65,7 +65,7 @@
 ** Revisión: 7 de mayo de 1998. Se crean las estructuras nodo y inic.
 */
  
-#define PROGRAMA     "Compilador de C para G10  (c) Oscar Toledo G.1996"
+#define PROGRAMA     "Transputer C Compiler (c) Oscar Toledo G. 1996, Translation Matt Gumbley 2026"
 
 #define NO           0
 #define SI           1

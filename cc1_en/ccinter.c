@@ -34,7 +34,7 @@ main()
     prologo();              /* Emite el prologo */
     analiza();              /* Hace la compilación */
     if (nivel)
-      error("Falta llave de cierre");
+      error("Missing closing brace");
     epilogo();              /* Emite el epilogo */
     cierra_salida();        /* Cierra la salida */
     reporta_errores();      /* Reporta errores detectados */
@@ -133,7 +133,7 @@ cancela()
   cierra_salida();
   hacia_consola();
   color(15);
-  mensaje("Compilación cancelada.");
+  mensaje("Compilation cancelled.");
   emite_nueva_linea();
   exit(1);
 }
@@ -145,9 +145,9 @@ reporta_errores()
 {
   emite_nueva_linea();
   color(11);
-  emite_texto("Hubo ");
+  emite_texto("There were ");
   emite_numero(errores);       /* No. total de errores */
-  emite_texto(" errores en la compilación.");
+  emite_texto(" errors in the compilation.");
   emite_nueva_linea();
 }
 
@@ -167,17 +167,17 @@ presentacion()
 opciones()
 {
   color(10);
-  mensaje("¿ Desea una pausa despues de un error (S/N) ? ");
+  mensaje("Do you want to pause after an error (Y/N)? ");
   gets(linea);
   pausa = NO;
-  if ((car_act == 'S') || (car_act == 's'))
+  if ((car_act == 'Y') || (car_act == 'y'))
     pausa = SI;
 
   color(10);
-  mensaje("¿ Desea que aparezca el listado C en la salida (S/N) ? ");
+  mensaje("Do you want the C source code to appear in the output (Y/N)? ");
   gets(linea);
   intercala_fuente = NO;
-  if ((car_act == 'S') | (car_act == 's'))
+  if ((car_act == 'Y') | (car_act == 'y'))
     intercala_fuente = SI;
 }
 
@@ -190,13 +190,13 @@ abre_salida()
   while (salida == 0) {
     descarta();
     color(10);
-    mensaje("¿ Archivo de salida ? ");
+    mensaje("Output file? ");
     gets(linea);        /* Obtiene el nombre */
     if (car_act == 0)
       break;            /* Ninguno... */
     if ((salida = fopen(linea, "w")) == NULL) {  /* Intenta crear */
       salida = 0;       /* No pudo crearse */
-      error("No se pudo crear el archivo");
+      error("The file could not be created");
     }
   }
   hacia_consola();
@@ -214,7 +214,7 @@ abre_entrada()
   while (entrada == 0) {
     descarta();         /* Limpia la línea de entrada */
     color(10);
-    mensaje("¿ Archivo de entrada ? ");
+    mensaje("Input file? ");
     gets(linea);        /* Obtiene un nombre */
     if (car_act == 0)
       break;
@@ -223,7 +223,7 @@ abre_entrada()
     else {
       entrada = 0;      /* No se pudo leer */
       color(15);
-      mensaje("No se pudo leer el archivo");
+      mensaje("The file could not be read.");
     }
   }
   descarta();           /* Limpia la línea */
@@ -269,18 +269,18 @@ p_include()
   } else {
     estatus = 0;
     comienzo = rastreo;
-    error("Error de sintaxis");
+    error("Syntax error");
   }
   while(*rastreo != '>' && *rastreo != '"' && *rastreo)
     ++rastreo;
   if(*rastreo == '>' && estatus == 1) *rastreo = 0;
   else if(*rastreo == '"' && estatus == 2) *rastreo = 0;
   else if(estatus != 0)
-    error("Falta > o \" al final");
+    error("Missing > or \" at the end");
   if (nivel_incl == MAX_INCL)
-    error("Demasiados #include");
+    error("Too many #includes");
   else if ((entrada2 = fopen(comienzo, "r")) == NULL)
-    error("No se pudo leer el archivo");
+    error("The file could not be read");
   else {
     incl[nivel_incl++] = entrada;
     incl[nivel_incl++] = funcion_actual;

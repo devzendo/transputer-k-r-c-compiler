@@ -68,7 +68,7 @@ nueva_glb(nombre, id, clase, tipo, valor)
   unsigned char *ap;
 
   if (ap_glb >= FIN_GLB) {
-    error("Tabla global llena");
+    error("Global table full");
     return 0;
   }
   ap = ap_glb;
@@ -93,7 +93,7 @@ nueva_loc(nombre, id, clase, tipo, valor)
   unsigned char *ap;
 
   if (ap_loc >= FIN_LOC) {
-    error("Tabla local llena");
+    error("Local table full");
     return 0;
   }
   ap = ap_loc;
@@ -436,7 +436,7 @@ preprocesa()
             evadir_nivel = 0;
           else if(evadir_nivel == 0)
             evadir_nivel = nivel_if;
-        } else error("No hay #if...");
+        } else error("There is no #if...");
         continue;
       }
       if(match("endif")) {
@@ -444,7 +444,7 @@ preprocesa()
           if(evadir_nivel == nivel_if)
             evadir_nivel = 0;
           --nivel_if;
-        } else error("No hay #if...");
+        } else error("There is no #if...");
         continue;
       }
       if(evadir_nivel) continue;
@@ -524,7 +524,7 @@ preprocesa()
                 if(m < MAX_AMAC)
                   amacs[m++] = obt_car();
                 else {
-                  error("Tabla de parametros de macros llena");
+                  error("Macro parameter table full");
                   cancela();
                 }
               }
@@ -534,9 +534,9 @@ preprocesa()
               ++args;
             }
             if(args != pars)
-              error("Número incorrecto de argumentos");
+              error("Incorrect number of arguments");
             if(car_act != ')')
-              error("Falta )");
+              error("Missing )");
             obt_car();
           }
           while(*def) {
@@ -566,7 +566,7 @@ preprocesa()
     strcpy(linea, linea_m);
     pos_linea = 0;
     if (pos_linea_m >= MAX_LINEA) {
-      error("Línea muy larga");
+      error("Very long line");
       break;
     }
   }
@@ -607,7 +607,7 @@ primer_paso()
   }
   almacena_car(0);
   if (pos_linea_m >= MAX_LINEA)
-    error("Línea muy larga");
+    error("Very long line");
   pos_linea = pos_linea_m = 0;
   while (linea[pos_linea++] = linea_m[pos_linea_m++]);
   pos_linea = 0;
@@ -641,7 +641,7 @@ pp_comillas()
   while ((car_act != '"') ||
         ((linea[pos_linea - 1] == 92) && (linea[pos_linea - 2] != 92))) {
     if (car_act == 0) {
-      error("Faltan comillas");
+      error("Quotation marks are missing.");
       break;
     }
     almacena_car(obt_car());
@@ -660,7 +660,7 @@ pp_apostrofe()
   while ((car_act != 39) ||
         ((linea[pos_linea - 1] == 92) && (linea[pos_linea - 2] != 92))) {
     if (car_act == 0) {
-      error("Falta un apostrofe");
+      error("Missing apostrophe");
       break;
     }
     almacena_car(obt_car());
@@ -716,7 +716,7 @@ nueva_macro()
         while(alfanum(car_act)) {
           if(l < MAX_AMAC) amacs[l++] = obt_car();
           else {
-            error("Tabla de parametros de macros llena");
+            error("Macro parameter table full");
             cancela();
           }
         }
@@ -726,7 +726,7 @@ nueva_macro()
       espacios();
       if(car_act == ',') obt_car();
       else if(car_act != ')') {
-        error("Falta ) en #define");
+        error("Missing ) in #define");
         break;
       }
     }
@@ -765,7 +765,7 @@ nueva_macro()
   }
   pone_macro(0);
   if (ap_mac >= MAX_MAC)
-    error("Tabla de macros llena");
+    error("Macro table full");
 }
 
 /*
@@ -847,7 +847,7 @@ emite_car(c)
   if (salida) {
     if (fputc(c, salida) <= 0) {
       cierra_salida();
-      error("Error al escribir");
+      error("Writing error");
       cancela();
     }
   } else
@@ -874,13 +874,13 @@ error(ap)
 
   hacia_consola();
   color(11);
-  emite_texto("Línea ");
+  emite_texto("Líne ");
   emite_numero(linea_actual);
   emite_texto(", ");
   if (!dentro_funcion)
     emite_car('(');
   if (funcion_actual == NULL)
-    emite_texto("comienzo del archivo");
+    emite_texto("start of file");
   else
     emite_texto(funcion_actual + NOMBRE);
   if (!dentro_funcion)
@@ -910,12 +910,12 @@ error(ap)
   hacia_archivo();
   if (pausa) {
     color(10);
-    mensaje("¿ Continuar (Si, No, Pasar de largo) ? ");
+    mensaje("Continue (Yes, No, Skip)? ");
     gets(entrada);
     k = entrada[0];
     if ((k == 'N') || (k == 'n'))
       cancela();
-    if ((k == 'P') || (k == 'p'))
+    if ((k == 'S') || (k == 's'))
       pausa = NO;
   }
 }

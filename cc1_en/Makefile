@@ -38,7 +38,7 @@ $(BUILDDIR):
 	mkdir -p $(BUILDDIR)
 
 # Build the English compiler (cc1_en) for the linux platform.
-$(BUILDDIR)/cc1_linux: cc.c | $(BUILDDIR)
+$(BUILDDIR)/cc1_linux: cc.c ccvars.c ccinter.c ccanasin.c ccvarios.c ccexpr.c ccgencod.c | $(BUILDDIR)
 	echo Building $@
 	$(CC) $(CFLAGS) -o $@ $<
 	echo ""

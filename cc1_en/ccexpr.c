@@ -120,7 +120,7 @@ expr_constante()
   if (ultimo_nodo->oper != N_CONST) {
     libera_arbol(ultimo_nodo);
     ultimo_nodo = origen;
-    error("No es una expresión constante");
+    error("It is not a constant expression");
     return 1;
   } else {
     valor = ultimo_nodo->esp;
@@ -209,13 +209,13 @@ nivel1(info)
   } else if (*tipo == STRUCT) {
     tipo2 = info2[0];
     if (*tipo2 != STRUCT)
-      error("Se requiere una estructura o unión");
+      error("A struct or union is required");
     else {
       if (lee_entero(tipo + 1) != lee_entero(tipo2 + 1))
-        error("Estructuras incompatibles");
+        error("Incompatible structs");
     }
     if (op != N_ASIGNA)
-      error("Asignación incompatible");
+      error("Incompatible assignment");
     crea_nodo(N_COPIA, der, ultimo_nodo, tam_tipo(tipo));
     return 0;
   } else
@@ -226,7 +226,7 @@ nivel1(info)
   && (op == N_AOR || op == N_AXOR
    || op == N_AAND || op == N_ACI
    || op == N_ACD || op == N_AMOD))
-    error("No se puede hacer esta operación con reales");
+    error("This operation cannot be performed with floating point numbers");
   if ((op == N_ASUMA) || (op == N_ARESTA)) {
     if (k = dobla(tipo, izq)) {
       if (k == 2) {
@@ -940,7 +940,7 @@ nivel13ap(info)
   else if (*ap == MATRIZ)
     ap += 5;
   else
-    error("No es un apuntador o matriz");
+    error("It is not a pointer or an array");
   info[0] = ap;
   if (*ap == FUNCION || *ap == MATRIZ || *ap == STRUCT)
     return 0;
@@ -956,7 +956,7 @@ nivel13dir(info)
   if (nivel13(info) == 0) {
     tipo = info[0];
     if (*tipo != STRUCT)
-      error("Dirección ilegal");
+      error("Illegal address");
   }
   nuevo_tipo = sig_tipo;
   guarda_tipo(APUNTADOR);
@@ -1018,7 +1018,7 @@ primaria(info, sin_parentesis)
      || (ap = busca_glb(nombre))) {
       if (ap[IDENT] == TYPEDEF
        || ap[IDENT] == ETIQUETA)
-        error("No es una variable o función");
+        error("It is not a variable or function");
       if (ap[IDENT] != FUNCION) {
         if (ap[CLASE] == AUTO)
           dir_var_loc(ap);
@@ -1043,7 +1043,7 @@ primaria(info, sin_parentesis)
   } else if (constante(info)) {
     k = 0;
   } else {
-    error("Expresión inválida");
+    error("Invalid expression");
     crea_nodo(N_CONST, NULL, NULL, 0);
     basura();
     info[0] = t_int;
@@ -1053,7 +1053,7 @@ primaria(info, sin_parentesis)
   while (1) {
     if (match("[")) {
       if (*tipo != APUNTADOR && *tipo != MATRIZ) {
-        error("No se puede usar subscripto");
+        error("Subscript cannot be used");
         basura();
         pide("]");
         return 0;
@@ -1110,7 +1110,7 @@ primaria(info, sin_parentesis)
       if (k)
         carga_valor(info);
       if (*tipo != FUNCION)
-        error("El tipo no es de función");
+        error("The type is not a function type");
       else
         ++tipo;
       if (ultimo_nodo->oper == N_APFUNC)
@@ -1128,7 +1128,7 @@ primaria(info, sin_parentesis)
         punto = 0;
       if (punto) {
         if (nombre_legal(nombre) == 0)
-          error("Nombre ilegal para el miembro");
+          error("Illegal name for the member");
         if (punto == 2) {
           if (k)
             carga_valor(info);
@@ -1137,16 +1137,16 @@ primaria(info, sin_parentesis)
           else if (*tipo == MATRIZ)
             tipo += 5;
           else
-            error("No es un apuntador o matriz");
+            error("It is not a pointer or an array.");
           info[0] = tipo;
         }
         if (*tipo != STRUCT) {
-          error("No es una estructura o unión");
+          error("It is not a structure or union");
           continue;
         }
         ap = lee_entero(tipo + 1);
         if (lee_entero(ap + EST_TAM) == 0) {
-          error("Estructura o unión incompleta");
+          error("Incomplete struct or union");
           continue;
         }
         ap = lee_entero(ap + EST_LISTA);
@@ -1163,7 +1163,7 @@ primaria(info, sin_parentesis)
           ap = lee_entero(ap + MIE_SIG);
         }
         if (ap == NULL)
-          error("Miembro indefinido");
+          error("Undefined member");
       } else
         break;
     }
@@ -1173,7 +1173,7 @@ primaria(info, sin_parentesis)
 
 req_valorl()
 {
-  error("Debe ser un valor-l");
+  error("It must be an l-value");
 }
 
 /*
@@ -1252,7 +1252,7 @@ carga_valor(info)
   else if (*tipo == DOUBLE)
     crea_nodo(N_CDOUBLE, ultimo_nodo, NULL, 0);
   else if (*tipo == VOID)
-    error("Tiene tipo void");
+    error("It has a void type");
   else
     crea_nodo(N_CPAL, ultimo_nodo, NULL, 0);
 }
@@ -1439,7 +1439,7 @@ numero_real(val)
 
     obt_car();
     if (numero(&exp) == 0) {
-      error("Exponente incorrecto");
+      error("Incorrect exponent");
       exp = 0;
     }
     if (exp < 0) {
@@ -1469,7 +1469,7 @@ numero_real(val)
   val[0] = k;
   if (k == const_definidas)
     if (const_definidas == MAX_CONST)
-      error("Demasiadas constantes de punto flotante");
+      error("Too many floating-point constants");
     else
       constantes[const_definidas++].valor = num;
   return 1;
@@ -1545,7 +1545,7 @@ cad_literal(val)
     if (car_act == 0)
       break;
     if (ap_lit >= MAX_LITS) {
-      error("Espacio de almacenamiento de cadenas agotado");
+      error("String storage space exhausted");
     while (match("\"") == 0)
       if (obt_car() == 0)
         break;
@@ -1613,7 +1613,7 @@ checa_entero(tipo)
 {
   if (*tipo != CHAR && *tipo != SHORT && *tipo != INT
    && *tipo != USHORT && *tipo != UINT)
-    error("No es un tipo entero");
+    error("It is not an integral type"); /* TR: entero - whole, integral based on what the code's checking? */
 }
 
 checa_numerico(tipo)
@@ -1622,7 +1622,7 @@ checa_numerico(tipo)
   if (*tipo != CHAR && *tipo != SHORT && *tipo != INT
    && *tipo != USHORT && *tipo != UINT && *tipo != DOUBLE
    && *tipo != FLOAT && *tipo != APUNTADOR)
-    error("No es un tipo númerico");
+    error("It is not a numeric type");
 }
 
 checa_entero_o_apuntador(tipo)
@@ -1630,7 +1630,7 @@ checa_entero_o_apuntador(tipo)
 {
   if (*tipo != CHAR && *tipo != SHORT && *tipo != INT
    && *tipo != USHORT && *tipo != UINT && *tipo != APUNTADOR)
-    error("No es un tipo entero");
+    error("It is not an integral type or pointer"); /* TR: entero - whole? integral seems better */
 }
 
 compara_no_cero(tipo)
@@ -1667,17 +1667,17 @@ convierte_tipo(nodo, tipo_original, nuevo_tipo)
   unsigned char *tipo_original, *nuevo_tipo;
 {
   if (*tipo_original == STRUCT && *nuevo_tipo != STRUCT)
-    error("No se puede convertir de estructura");
+    error("Cannot convert from structure");
   else if (*tipo_original != STRUCT && *nuevo_tipo == STRUCT)
-    error("No se puede convertir a estructura");
+    error("Cannot convert to structure");
   else if (*tipo_original == VOID)
-    error("No se puede convertir de void");
+    error("Cannot convert from void");
   else if (*tipo_original == APUNTADOR &&
           (*nuevo_tipo == DOUBLE || *nuevo_tipo == FLOAT))
-    error("No se puede convertir un apuntador a real");
+    error("A pointer cannot be converted to a floating point number");
   else if (*nuevo_tipo == APUNTADOR &&
           (*tipo_original == DOUBLE || *tipo_original == FLOAT))
-    error("No se puede convertir un real a apuntador");
+    error("A floating point number cannot be converted to a pointer");
   else {
     if (*tipo_original == DOUBLE && *nuevo_tipo == DOUBLE)
       return;
@@ -1711,7 +1711,7 @@ haz_compatible(nodo_izq, info_izq, nodo_der, info_der)
   tipo_izq = info_izq[0];
   tipo_der = info_der[0];
   if (*tipo_izq == STRUCT || *tipo_der == STRUCT)
-    error("No se pueden efectuar operaciones con estructuras");
+    error("Operations cannot be performed on structures");
   if (*tipo_izq == FLOAT && *tipo_der == FLOAT)
     return 1;
   if (*tipo_izq == DOUBLE && *tipo_der == DOUBLE)

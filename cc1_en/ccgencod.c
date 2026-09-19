@@ -120,7 +120,7 @@ crea_nodo(op, izq, der, val)
 
   ultimo_nodo = malloc(sizeof(struct nodo));
   if (ultimo_nodo == NULL) {
-    error("Expresión muy compleja");
+    error("Very complex expression");
     cancela();
   }
   if (op == N_CSUMA) {
@@ -1187,8 +1187,8 @@ prologo()
   emite_nueva_linea();
   comentario();
   emite_nueva_linea();
-  emite_linea("COMIENZO:");
-  emite_linea("j INICIO");
+  emite_linea("COMIENZO:"); /* Beginning? */
+  emite_linea("j INICIO"); /* Start? */
 }
 
 /*
@@ -1202,7 +1202,7 @@ epilogo()
 
   emite_nueva_linea();
   comentario();
-  emite_texto(" >>>>> Fin de compilación <<<<<");
+  emite_texto(" >>>>> End of compilation <<<<<");
   emite_nueva_linea();
   emite_texto("INICIO");
   dos_puntos();

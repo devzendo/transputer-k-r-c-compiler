@@ -42,7 +42,7 @@ $(BUILDDIR):
 	mkdir -p $(BUILDDIR)
 
 # So things in this makefile can depend on it
-$(BUILDDIR)/cc1_native: cc1_en
+$(BUILDDIR)/cc1_linux: cc1_en
 
 # Recurse `make` into each subdirectory.
 $(SUBDIRS): FORCE | $(BUILDDIR)

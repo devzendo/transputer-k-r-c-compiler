@@ -16,17 +16,6 @@ CFLAGS  = -std=gnu90 \
 
 BUILDDIR = build
 
-# Register all subdirectories in the project's root directory.
-SUBDIRS := cc1_en
-
-# Recurse `make` into each subdirectory.
-$(SUBDIRS): FORCE | $(BUILDDIR)
-	$(MAKE) -C $@
-
-# A target without prerequisites and a recipe, and there is no file named `FORCE`.
-# `make` will always run this and any other target that depends on it.
-FORCE:
-
 ALL = $(BUILDDIR)/tc2_linux \
 		$(BUILDDIR)/tc2_es_orig_linux \
 		$(BUILDDIR)/tasm_modern_linux \
@@ -36,8 +25,7 @@ ALL = $(BUILDDIR)/tc2_linux \
 		$(BUILDDIR)/tc2.bin \
 		$(BUILDDIR)/tasm.bin \
 		$(BUILDDIR)/iserver_putchar_example.asm \
-		$(BUILDDIR)/iserver_putchar_example.bin \
-		$(BUILDDIR)/cc1_native
+		$(BUILDDIR)/iserver_putchar_example.bin
 
 #		$(BUILDDIR)/tasm_linux \
 #		$(BUILDDIR)/tc2.bin \
@@ -45,13 +33,26 @@ ALL = $(BUILDDIR)/tc2_linux \
 
 .PHONY: all clean
 
+# Register all subdirectories in the project's root directory.
+SUBDIRS := cc1_en
+
 all: $(BUILDDIR) $(ALL) $(SUBDIRS)
 
 $(BUILDDIR):
 	mkdir -p $(BUILDDIR)
 
-# Build the English compiler (tc2) and the Spanish compiler (tc2_es_orig) for Linux.
+# So things in this makefile can depend on it
+$(BUILDDIR)/cc1_native: cc1_en
 
+# Recurse `make` into each subdirectory.
+$(SUBDIRS): FORCE | $(BUILDDIR)
+	$(MAKE) -C $@
+
+# A target without prerequisites and a recipe, and there is no file named `FORCE`.
+# `make` will always run this and any other target that depends on it.
+FORCE:
+
+# Build the English compiler (tc2) and the Spanish compiler (tc2_es_orig) for Linux.
 $(BUILDDIR)/tc2_linux: tc2.c | $(BUILDDIR)
 	echo Building $@
 	$(CC) $(CFLAGS) -o $@ $<

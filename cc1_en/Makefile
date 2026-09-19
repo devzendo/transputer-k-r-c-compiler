@@ -5,18 +5,19 @@ CFLAGS  = -x c -std=gnu89 \
            -Wno-int-conversion \
            -Wno-strict-prototypes \
            -Wno-old-style-definition \
-           -Wno-deprecated-non-prototype \
            -Wno-parentheses \
            -fno-strict-aliasing \
-           -Wno-builtin-requires-header \
-           -Wno-invalid-source-encoding \
            -Wno-deprecated-declarations \
            -Wno-pointer-sign \
-           -Wno-incompatible-library-redeclaration \
            -Wno-empty-body \
-           -Wno-macro-redefined \
            -Wno-builtin-declaration-mismatch
 
+
+#            -Wno-macro-redefined \
+#           -Wno-incompatible-library-redeclaration \
+#           -Wno-invalid-source-encoding \
+#           -Wno-builtin-requires-header \
+           #-Wno-deprecated-non-prototype \
 
 #            -Wno-implicit-function-declaration  # calls before declaration
 #            -Wno-return-type                    # fall-off-end functions
@@ -30,13 +31,20 @@ CFLAGS  = -x c -std=gnu89 \
 
 BUILDDIR = ../build
 
-ALL = $(BUILDDIR)/cc1_native
+ALL = $(BUILDDIR) $(BUILDDIR)/cc1_native
+
+.PHONY: all clean
+
+all: $(ALL)
+
+
+clean: $(BUILDDIR)/cc1_native
+	rm $(BUILDDIR)/cc1_native
 
 $(BUILDDIR):
 	mkdir -p $(BUILDDIR)
 
 # Build the English compiler (cc1_en) for the native platform.
-
 $(BUILDDIR)/cc1_native: cc.c | $(BUILDDIR)
 	echo Building $@
 	$(CC) $(CFLAGS) -o $@ $<

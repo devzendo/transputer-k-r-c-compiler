@@ -1,8 +1,8 @@
 # transputer-k-r-c-compiler
 
 ## What is this?
-A Small-C compiler and assemblers, targetting the Transputer.
-It is part of the [Parachute Project](https://devzendo.github.io/parachute).
+Small-C compilers and assemblers, targetting the Transputer.
+They are part of the [Parachute Project](https://devzendo.github.io/parachute).
 
 ### 'Ron Cain' Small-C Compiler tc2 and tasm/tasm_modern
 It was written by Óscar Toledo Gutiérrez for his emulation and OS project, between 1993-1996.
@@ -16,7 +16,7 @@ at https://nanochess.org/bootstrapping_c_os_transputer.html .
 The repository of his original whole system can be found
 at https://github.com/nanochess/transputer .
 
-This repository contains a copy of his compiler and assembler, modified by Matt Gumbley (files tc2*, tasm*).
+This repository contains a copy of his early compiler and assemblers, modified by Matt Gumbley (files tc2*, tasm*).
 The modifications are:
 * Translation of messages, identifiers, comments etc. from Spanish to English. Matt does
   not speak Spanish, but the translations are being verified against the Ron Cain article.
@@ -35,7 +35,9 @@ dynamic expression tree generator using malloc/free. It was written to build usi
 In this repository, the `cc1_es` directory contains a copy of Óscar's cc1 compiler with no changes or translation.
 
 The `cc1_en` directory contains my attempt at porting this to the platforms I'm targetting with Parachute, and
-manual translation from Spanish to English.
+manual translation from Spanish to English. Initially, it builds on Intel Debian 32-bit Linux, using gcc and its stdlib.
+My goal is to cross-compile to run on the Parachute emulator and IServer, using the iserverstdio.c routines to interface
+with the IServer. Óscar is also investigating how to make it build on 64-bit systems directly.
 
 The modifications are:
 * Translation of messages from Spanish to English. I am attempting to translate this 'by hand' rather than by using
@@ -91,9 +93,13 @@ For the first phase, on Debian 32-bit Intel Linux, build it with GNU make:
 
 `make clean; make`
 
-This will build the compiler and assembler (build/tc2_linux and
-build/tasm_linux), then use this compiler to compile itself into the Transputer
+This will build the compilers and assemblers (build/tc2_linux, build/cc1_linux, and
+build/tasm_linux, build/tasm_modern_linux), then use this compiler to compile itself into the Transputer
 assembler file build/tc2.asm.
+
+This will then have to have the boot loader added, and assembled into a final binary by my macro assembler
+(transputer-macro-assembler) as the bootstrap code won't build with these assemblers yet - or, there isn't a bootstrap
+that's compatible with the syntax understood by these assemblers.
 
 To build it on the Transputer... (later)
 

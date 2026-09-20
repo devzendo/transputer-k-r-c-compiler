@@ -5,8 +5,9 @@ version. Original sources at https://github.com/nanochess/transputer.git
 Translation status:
 * All messages to the user translated from Spanish to English with help from Google Translate.
 * Where there is a choice of Si/No/Pasar de largo, this has been translated to Yes/No/Skip.
+* The symbols in the prologue/epilogue are renamed: COMENZIO -> START; INICIO -> ENTRY.
 
--- Matt Gumbley, 18/09/2026
+-- Matt Gumbley, 20/09/2026
 
 
 This directory contains an improved C compiler for G10.

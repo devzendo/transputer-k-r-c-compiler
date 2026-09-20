@@ -1187,8 +1187,8 @@ prologo()
   emite_nueva_linea();
   comentario();
   emite_nueva_linea();
-  emite_linea("COMIENZO:"); /* Beginning? */
-  emite_linea("j INICIO"); /* Start? */
+  emite_linea("START:");
+  emite_linea("j ENTRY");
 }
 
 /*
@@ -1204,7 +1204,7 @@ epilogo()
   comentario();
   emite_texto(" >>>>> End of compilation <<<<<");
   emite_nueva_linea();
-  emite_texto("INICIO");
+  emite_texto("ENTRY");
   dos_puntos();
   emite_nueva_linea();
   pos_total = pos_global + const_definidas * 2;
@@ -1228,9 +1228,9 @@ epilogo()
     emite_linea("stl 0");
     ins("ldc ", pos_global - 3);
     emite_linea("stl 1");
-    emite_texto("INICIO2:\nldc 0\nldl 0\nstnl 0\nldl 0\n");
+    emite_texto("START2:\nldc 0\nldl 0\nstnl 0\nldl 0\n");
     emite_texto("adc 4\nstl 0\nldl 1\nadc -1\nstl 1\n");
-    emite_texto("ldl 1\neqc 0\ncj INICIO2\n");
+    emite_texto("ldl 1\neqc 0\ncj START2\n");
   }
   ins("ldl ", pos_total + 3);
   ins("ldl ", pos_total + 2);

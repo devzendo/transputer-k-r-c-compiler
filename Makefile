@@ -34,7 +34,7 @@ ALL = $(BUILDDIR)/tc2_linux \
 .PHONY: all clean
 
 # Register all subdirectories in the project's root directory.
-SUBDIRS := cc1_en
+SUBDIRS := cc1
 
 all: $(BUILDDIR) $(ALL) $(SUBDIRS)
 
@@ -42,7 +42,7 @@ $(BUILDDIR):
 	mkdir -p $(BUILDDIR)
 
 # So things in this makefile can depend on it
-$(BUILDDIR)/cc1_linux: cc1_en
+$(BUILDDIR)/cc1_linux: cc1
 
 # Recurse `make` into each subdirectory.
 $(SUBDIRS): FORCE | $(BUILDDIR)

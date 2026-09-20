@@ -27,17 +27,20 @@ The modifications are:
 * Bugfix: When errors are detected in the compiler, it exits with status 1.
 
 ### 'James Hendrix Small-C Compiler' cc1
-The `cc1*` directories in this repository contain a copy of a later (1998) version of Óscar's compiler, documented in
-his article at https://nanochess.org/am29000_c_compiler_web_browser.html . In his repository, there are two variants of
-this compiler, cc0 (more like James Hendrix' Small-C than Ron Cain's), and cc1, which enhances the cc0 compiler with a
-dynamic expression tree generator using malloc/free. It was written to build using the DJGPP compiler on MSDOS.
+The `cc1` and `cc1_es` directories in this repository contain a copy of a later (1998) version of Óscar's compiler,
+documented in his article at https://nanochess.org/am29000_c_compiler_web_browser.html . In his repository, there are
+two variants of this compiler, cc0 (more like James Hendrix' Small-C than Ron Cain's), and cc1, which enhances the cc0
+compiler with a dynamic expression tree generator using malloc/free. It was written to build using the DJGPP compiler
+on MSDOS.
 
 In this repository, the `cc1_es` directory contains a copy of Óscar's cc1 compiler with no changes or translation.
 
-The `cc1_en` directory contains my attempt at porting this to the platforms I'm targetting with Parachute, and
-manual translation from Spanish to English. Initially, it builds on Intel Debian 32-bit Linux, using gcc and its stdlib.
-My goal is to cross-compile to run on the Parachute emulator and IServer, using the iserverstdio.c routines to interface
-with the IServer. Óscar is also investigating how to make it build on 64-bit systems directly.
+The `cc1` directory contains my attempt at porting this to the platforms I'm targetting with Parachute, and
+manual translation of the user-facing messages from Spanish to English. Initially, it builds on Intel Debian 32-bit
+Linux, using gcc and its stdlib. My goal is to cross-compile to run on the Parachute emulator and IServer, using the
+iserverstdio.c routines to interface with the IServer. 
+
+Óscar is also investigating how to make it build on 64-bit systems directly.
 
 The modifications are:
 * Translation of messages from Spanish to English. I am attempting to translate this 'by hand' rather than by using

@@ -1210,7 +1210,7 @@ epilogo()
   pos_total = pos_global + const_definidas * 2;
   ins("ajw ", -pos_total);
   if (const_definidas) {
-    emite_texto("ldc TABLA-");
+    emite_texto("ldc TABLE-");
     emite_etiq(temp = nueva_etiq);
     emite_nueva_linea();
     emite_linea("ldpi");
@@ -1240,7 +1240,7 @@ epilogo()
   emite_linea("ret");
   libreria();
   if (const_definidas) {
-    emite_linea("TABLA:");
+    emite_linea("TABLE:");
     for(pos = 0; pos < const_definidas; ++pos) {
       def_byte();
       for(byte = 0; byte < TAM_DOUBLE; ++byte) {

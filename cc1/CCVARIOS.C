@@ -874,7 +874,7 @@ error(ap)
 
   hacia_consola();
   color(11);
-  emite_texto("Líne ");
+  emite_texto("Line ");
   emite_numero(linea_actual);
   emite_texto(", ");
   if (!dentro_funcion)

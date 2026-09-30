@@ -1,0 +1,25 @@
+From 0df48519cd4e1b31a9e1a6f309f7cb0d5b160644 Mon Sep 17 00:00:00 2001
+From: Matt Gumbley <matt.gumbley@devzendo.org>
+Date: Wed, 30 Sep 2026 20:44:33 +0100
+Subject: [PATCH] Set Parachute banner
+
+---
+ cc1/CCvars.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/cc1/CCvars.c b/cc1/CCvars.c
+index b068034..d69cab1 100644
+--- a/cc1/CCvars.c
++++ b/cc1/CCvars.c
+@@ -65,7 +65,7 @@
+ ** Revisión: 7 de mayo de 1998. Se crean las estructuras nodo y inic.
+ */
+  
+-#define PROGRAMA     "Compilador de C para G10  (c) Oscar Toledo G.1996"
++#define PROGRAMA     "Transputer C Compiler (c) Oscar Toledo G. 1996, Parachute port by Matt Gumbley 2026"
+ 
+ #define NO           0
+ #define SI           1
+-- 
+2.53.0
+

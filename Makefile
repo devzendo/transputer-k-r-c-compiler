@@ -14,11 +14,26 @@ CFLAGS  = -std=gnu90 \
            -Wno-parentheses \
            -fno-strict-aliasing
 
+# Flags for the K&R compiler cc1
+CFLAGS_OLD = -x c -std=gnu89 \
+           -Wno-implicit-function-declaration \
+           -Wno-return-type \
+           -Wno-int-conversion \
+           -Wno-strict-prototypes \
+           -Wno-old-style-definition \
+           -Wno-parentheses \
+           -fno-strict-aliasing \
+           -Wno-deprecated-declarations \
+           -Wno-pointer-sign \
+           -Wno-empty-body \
+           -Wno-builtin-declaration-mismatch
+
 BUILDDIR = build
 
 ALL = $(BUILDDIR)/tc2_linux \
 		$(BUILDDIR)/tc2_es_orig_linux \
-		$(BUILDDIR)/tasm_modern_linux
+		$(BUILDDIR)/tasm_modern_linux \
+		$(BUILDDIR)/cc1
 #		$(BUILDDIR)/tc2.asm \
 #		$(BUILDDIR)/tasm.asm \
 #		$(BUILDDIR)/iserverstdio.asm \
@@ -33,32 +48,42 @@ ALL = $(BUILDDIR)/tc2_linux \
 
 .PHONY: all clean
 
-# Register all subdirectories in the project's root directory.
-SUBDIRS := cc1
-
-all: $(BUILDDIR) $(ALL)  # $(SUBDIRS)
+all: $(BUILDDIR) $(ALL)
 
 $(BUILDDIR):
 	mkdir -p $(BUILDDIR)
 
+PATCHES   := $(sort $(wildcard *.patch))
+PATCH_STAMP := $(BUILDDIR)/patches-applied
+
+$(PATCH_STAMP): $(PATCHES)
+	echo Patching cc1
+	$(if $(PATCHES),git apply $(PATCHES))
+	git --version > $@
+
+$(BUILDDIR)/cc1: cc1/CC2.c cc1/CCvars.c cc1/CCinter.c cc1/CCanasin.c cc1/CCvarios.c cc1/CCexpr.c cc1/CCgencod.c | $(BUILDDIR) $(PATCH_STAMP)
+	echo Building $@
+	$(CC) $(CFLAGS_OLD) -o $@ $<
+	echo ""
+	echo ""
+
+
 # So things in this makefile can depend on it
 $(BUILDDIR)/cc1_linux: cc1_en
-
-# Recurse `make` into each subdirectory.
-# $(SUBDIRS): FORCE | $(BUILDDIR)
-#	$(MAKE) -C $@
 
 # A target without prerequisites and a recipe, and there is no file named `FORCE`.
 # `make` will always run this and any other target that depends on it.
 FORCE:
 
 # Build the English compiler (tc2) and the Spanish compiler (tc2_es_orig) for Linux.
+# DEPRECATE
 $(BUILDDIR)/tc2_linux: tc2.c | $(BUILDDIR)
 	echo Building $@
 	$(CC) $(CFLAGS) -o $@ $<
 	echo ""
 	echo ""
 
+# DEPRECATE
 $(BUILDDIR)/tc2_es_orig_linux: tc2_es_orig.c | $(BUILDDIR)
 	echo Building $@
 	$(CC) $(CFLAGS) -o $@ $<
@@ -67,7 +92,8 @@ $(BUILDDIR)/tc2_es_orig_linux: tc2_es_orig.c | $(BUILDDIR)
 #	echo Building $@
 #	$(CC) $(CFLAGS) -o $@ $<
 
-# Build the modern assembler (tasm_modern) for Linux. It's not in Small-C, so can't be built for Transputer.
+# Build the modern assembler (tasm_modern) for Linux. It's not in Small-C, so can't be built for Transputer. It does
+# appear to be in K&R C so could be built with cc1?
 
 $(BUILDDIR)/tasm_modern_linux: tasm_modern.c | $(BUILDDIR)
 	echo Building $@
@@ -147,4 +173,5 @@ $(BUILDDIR)/iserver_putchar_example.bin: $(BUILDDIR)/iserver_putchar_example.asm
 
 clean:
 	rm -rf $(BUILDDIR)
+	(cd cc1; git checkout -- *)
 

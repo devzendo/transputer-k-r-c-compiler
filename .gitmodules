@@ -1,0 +1,3 @@
+[submodule "cc1"]
+	path = cc1
+	url = https://github.com/nanochess/transputer-cc

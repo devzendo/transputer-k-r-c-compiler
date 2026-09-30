@@ -18,14 +18,14 @@ BUILDDIR = build
 
 ALL = $(BUILDDIR)/tc2_linux \
 		$(BUILDDIR)/tc2_es_orig_linux \
-		$(BUILDDIR)/tasm_modern_linux \
-		$(BUILDDIR)/tc2.asm \
-		$(BUILDDIR)/tasm.asm \
-		$(BUILDDIR)/iserverstdio.asm \
-		$(BUILDDIR)/tc2.bin \
-		$(BUILDDIR)/tasm.bin \
-		$(BUILDDIR)/iserver_putchar_example.asm \
-		$(BUILDDIR)/iserver_putchar_example.bin
+		$(BUILDDIR)/tasm_modern_linux
+#		$(BUILDDIR)/tc2.asm \
+#		$(BUILDDIR)/tasm.asm \
+#		$(BUILDDIR)/iserverstdio.asm \
+#		$(BUILDDIR)/tc2.bin \
+#		$(BUILDDIR)/tasm.bin \
+#		$(BUILDDIR)/iserver_putchar_example.asm \
+#		$(BUILDDIR)/iserver_putchar_example.bin
 
 #		$(BUILDDIR)/tasm_linux \
 #		$(BUILDDIR)/tc2.bin \
@@ -36,17 +36,17 @@ ALL = $(BUILDDIR)/tc2_linux \
 # Register all subdirectories in the project's root directory.
 SUBDIRS := cc1
 
-all: $(BUILDDIR) $(ALL) $(SUBDIRS)
+all: $(BUILDDIR) $(ALL)  # $(SUBDIRS)
 
 $(BUILDDIR):
 	mkdir -p $(BUILDDIR)
 
 # So things in this makefile can depend on it
-$(BUILDDIR)/cc1_linux: cc1
+$(BUILDDIR)/cc1_linux: cc1_en
 
 # Recurse `make` into each subdirectory.
-$(SUBDIRS): FORCE | $(BUILDDIR)
-	$(MAKE) -C $@
+# $(SUBDIRS): FORCE | $(BUILDDIR)
+#	$(MAKE) -C $@
 
 # A target without prerequisites and a recipe, and there is no file named `FORCE`.
 # `make` will always run this and any other target that depends on it.

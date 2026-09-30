@@ -1,12 +1,43 @@
 # transputer-k-r-c-compiler
 
 ## What is this?
-Small-C compilers and assemblers, targetting the Transputer.
-They are part of the [Parachute Project](https://devzendo.github.io/parachute).
+A 'packaging build' of Óscar Toledo Gutiérrez's K&R C compiler and assembler, targetting native
+platforms - and in later phases of the project, the Transputer / IServer. 
+These are included as part of the [Parachute Project](https://devzendo.github.io/parachute).
+
+Please note that much of this repository contains historical versions of these tools, and my attempts to integrate them
+with the rest of my project - Parachute contains native builds of the 'tasm_modern' assembler (source from here), and
+the 'cc1' compiler (this project pulls this in as a submodule from its origin, and patches it for use in Parachute).
+
+## Project Status
+Actively in development, last changes in September 2026.
+
+Started late April 2026.
+
+## Tools provided by this project
+
+### 'cc1' K&R C Native Compiler with English messages
+Shortly after writing https://nanochess.org/bootstrapping_c_os_transputer.html, Óscar started modifying his compiler to
+build properly on 64-bit systems, and also provide user messages in English.
+See https://nanochess.org/transputer_c_compiler.html for more details of this. The
+compiler is now hosted in his repo at https://github.com/nanochess/transputer-cc . 
+
+The compilers ports/translations in this repo are no longer required (see below).
+
+This repo now pulls in Óscar's repo as a submodule under the 'cc1' directory, applies a few patches to it for use in the
+Parachute system, and builds it natively for all the platforms Parachute supports.
+The patches perform the following:
+* Updates the banner to show that this is a Parachute variant of the compiler.
+
+Later patches will:
+* Add command-line handling to set the input/output file and options. The original compiler is interactive.
+
+Later enhancements will add stdio/stdlib functions to permit the compiler to run on the emulator itself, using the IServer
+for I/O and command line handling - this will aid the project's bootstrappability.
 
 ### 'Ron Cain' Small-C Compiler tc2 and tasm/tasm_modern
-It was written by Óscar Toledo Gutiérrez for his emulation and OS project, between 1993-1996.
-It is based on the Small-C compiler by Ron Cain, which was published in Dr. Dobbs'
+These were written by Óscar for his emulation and OS project, between 1993-1996.
+They are based on the Small-C compiler by Ron Cain, which was published in Dr. Dobbs'
 journal vol 5 no 45 - the full volume of which may be found
 at https://archive.org/details/dr_dobbs_journal_vol_05_201803/page/n189/mode/2up
 A copy of just the Ron Cain article PDF may be found in this repository.
@@ -26,8 +57,14 @@ The modifications are:
 * Enhancements to work with the Parachute IServer.
 * Bugfix: When errors are detected in the compiler, it exits with status 1.
 
-### 'James Hendrix Small-C Compiler' cc1
-The `cc1` and `cc1_es` directories in this repository contain a copy of a later (1998) version of Óscar's compiler,
+Note that Parachute now only includes the 'tasm_modern' assembler from these sources.
+
+The 'tasm' assembler and 'tc2' compiler are older, and no longer used.
+
+### 'James Hendrix K&R C Compiler' cc1_en
+Note that this directory is historical, and no longer used in Parachute.
+
+The `cc1_en` and `cc1_es` directories in this repository contain a copy of a later (1998) version of Óscar's compiler,
 documented in his article at https://nanochess.org/am29000_c_compiler_web_browser.html . In his repository, there are
 two variants of this compiler, cc0 (more like James Hendrix' Small-C than Ron Cain's), and cc1, which enhances the cc0
 compiler with a dynamic expression tree generator using malloc/free. It was written to build using the DJGPP compiler
@@ -35,23 +72,19 @@ on MSDOS.
 
 In this repository, the `cc1_es` directory contains a copy of Óscar's cc1 compiler with no changes or translation.
 
-The `cc1` directory contains my attempt at porting this to the platforms I'm targetting with Parachute, and
+The `cc1_en` directory contains my attempt at porting this to the platforms I'm targetting with Parachute, and
 manual translation of the user-facing messages from Spanish to English. Initially, it builds on Intel Debian 32-bit
-Linux, using gcc and its stdlib. My goal is to cross-compile to run on the Parachute emulator and IServer, using the
-iserverstdio.c routines to interface with the IServer. 
-
-Óscar is also investigating how to make it build on 64-bit systems directly.
+Linux, using gcc and its stdlib. 
 
 The modifications are:
 * Translation of messages from Spanish to English. I am attempting to translate this 'by hand' rather than by using
   Claude, although I also use Google Translate which is now LLM-based.
-* Porting to the platforms supported by Parachute.
 
+My eventual goal was to cross-compile to run on the Parachute emulator and IServer, using the iserverstdio.c routines
+to interface with the IServer. I'll be continuing this with 'cc1' (see above)
 
-## Project Status
-Actively in development, last changes in September 2026.
+Óscar enhanced this code significantly to make it build on 64-bit systems directly. (see 'cc1', above)
 
-Started late April 2026. 
 
 # Overview
 I'd like to bootstrap my development efforts for Transputer code, and with my existing

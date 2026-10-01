@@ -1,21 +1,22 @@
-# Note this only works on 32-bit systems currently
-# due to pointer/int length differences in tc2.c
-# e.g. Debian Bookworm Intel.
 
-CC      = gcc
-CFLAGS  = -std=gnu90 \
+ifeq ($(OS),Windows_NT)
+    CC      = cl
+    CFLAGS_TASM = -TC -wd4013 -wd4033 -wd4716 -wd4024 -wd4047 -wd4133
+	CFLAGS_CC1 = -TC -Zi -wd4013 -wd4033 -wd4716 -wd4024 -wd4047 -wd4133 -wd4996
+    OUTFLAG := -Fe
+    EXE     := .exe
+else
+	CC      = gcc
+	CFLAGS_TASM  = -std=gnu90 \
            -Wno-implicit-int \
            -Wno-implicit-function-declaration \
            -Wno-return-type \
            -Wno-int-conversion \
            -Wno-strict-prototypes \
            -Wno-old-style-definition \
-           -Wno-old-style-declaration \
            -Wno-parentheses \
            -fno-strict-aliasing
-
-# Flags for the K&R compiler cc1
-CFLAGS_OLD = -x c -g -std=gnu89 \
+	CFLAGS_CC1 = -x c -g -std=gnu89 \
            -Wno-implicit-function-declaration \
            -Wno-return-type \
            -Wno-int-conversion \
@@ -25,13 +26,16 @@ CFLAGS_OLD = -x c -g -std=gnu89 \
            -fno-strict-aliasing \
            -Wno-deprecated-declarations \
            -Wno-pointer-sign \
-           -Wno-empty-body \
-           -Wno-builtin-declaration-mismatch
+           -Wno-empty-body
+	OUTFLAG := -o
+    EXE     :=
+endif
+
 
 BUILDDIR = build
 
-ALL = $(BUILDDIR)/tasm \
-		$(BUILDDIR)/cc1 \
+ALL = $(BUILDDIR)/tasm$(EXE) \
+		$(BUILDDIR)/cc1$(EXE) \
 		$(BUILDDIR)/iserverstdio.asm \
 		$(BUILDDIR)/iserver_putchar_example.asm
 #		$(BUILDDIR)/cc1.asm \
@@ -62,16 +66,16 @@ FORCE:
 # Native builds.
 
 # Build the K&R Compiler natively. It's in K&R C (no extern/static).
-$(BUILDDIR)/cc1: cc1/CC.c cc1/CCvars.c cc1/CCinter.c cc1/CCanasin.c cc1/CCvarios.c cc1/CCexpr.c cc1/CCgencod.c | $(BUILDDIR) $(PATCH_STAMP)
+$(BUILDDIR)/cc1$(EXE): cc1/CC.c cc1/CCvars.c cc1/CCinter.c cc1/CCanasin.c cc1/CCvarios.c cc1/CCexpr.c cc1/CCgencod.c | $(BUILDDIR) $(PATCH_STAMP)
 	echo Building $@
-	$(CC) $(CFLAGS_OLD) -o $@ $<
+	$(CC) $(CFLAGS_CC1) $(OUTFLAG)$@ $<
 	echo ""
 	echo ""
 
 # Build the assembler natively. Could be built with cc1?
-$(BUILDDIR)/tasm: tasm.c | $(BUILDDIR)
+$(BUILDDIR)/tasm$(EXE): tasm.c | $(BUILDDIR)
 	echo Building $@
-	$(CC) -std=gnu99 -o $@ $<
+	$(CC) $(CFLAGS_TASM) $(OUTFLAG)$@ $<
 	echo ""
 	echo ""
 

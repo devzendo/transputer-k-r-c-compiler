@@ -5,9 +5,12 @@ A 'packaging build' of Óscar Toledo Gutiérrez's K&R C compiler and assembler, 
 platforms - and in later phases of the project, the Transputer / IServer. 
 These are included as part of the [Parachute Project](https://devzendo.github.io/parachute).
 
-Please note that much of this repository contains historical versions of these tools, and my attempts to integrate them
+Please note that some of this repository contains historical versions of these tools, and my attempts to integrate them
 with the rest of my project - Parachute contains native builds of the 'tasm' assembler (source from here), and
 the 'cc1' compiler (this project pulls this in as a submodule from its origin, and patches it for use in Parachute).
+
+'tasm' is suited to work with the output of the 'cc1' compiler; it isn't a full macro assembler - for that, please see
+my 'transputer-macro-assembler' project, also part of Parachute.
 
 ## Project Status
 Actively in development, last changes in October 2026.
@@ -64,11 +67,6 @@ granted.
 The plan is to build the compiler and assembler on modern 64-bit systems - to
 provide tools for building C into Transputer binaries on these modern systems.
 
-However initially, these first versions have to run on a 32-bit system, as early experiments
-with 64-bit execution lead to crashes. I know where some pointer/int length
-problems lie, and will be working to address these problems, so that these tools
-can run on 64-bit systems.
-
 Then, use these versions of the compiler to compile itself, completing the
 bootstrap loop - providing tools that run on the Transputer directly, compiling into
 Transputer binaries, making use of the IServer for host communications.
@@ -90,12 +88,16 @@ necessary. Edit the patch to add in the cc1/ prefix to all directories/files. Yo
 cc1 submodule.
 
 ## Building
-For the first phase, on native platforms, build it with GNU make:
+Ensure you have pulled the submodules with:
+`git submodule update --init --recursive`
 
+For the first phase, on native platforms, build it with GNU make:
 `make clean; make`
 
-This will build the compiler and assembler (build/cc1, build/tasm), then use this compiler to compile itself into the
-Transputer assembler file build/cc1.asm.
+This will patch & build the compiler and assembler (build/cc1, build/tasm), then use this compiler to compile itself
+into the Transputer assembler file build/cc1.asm.
+
+... and that's as far as we go for now. Compiler and assembler run only on native platforms.
 
 This will then have to have the boot loader added, and assembled into a final binary by my macro assembler
 (transputer-macro-assembler) as the bootstrap code won't build with these assemblers yet - or, there isn't a bootstrap
@@ -110,7 +112,7 @@ Later!
 When there is some, it'll be in the 'docs' directory, when this exists!
 
 
-# Modern Assembler Translation details
+# Assembler Translation details
 
 ## Structs
 
@@ -129,17 +131,6 @@ All 20+ renamed: ensambla→assemble, calcula_dispersion→hash_name, define_eti
 
 All error strings and comments translated throughout.
 
-# Small C Assembler Translation details
-
-Here's a summary of everything translated across the 1,473-line file:
-
-Macros — SI→YES, TAM_LIN→LINE_SIZE, TAM_BUF→BUF_SIZE, TAM_MEM→MEM_SIZE, TAM_ETIQ→LABEL_SIZE, TAM_INDEF→UNRES_SIZE, plus all the struct layout comments on those defines.
-
-Global variables — archivo→input_fp, temp1/temp2→temp1_fp/temp2_fp, fin_de_archivo→end_of_file, linea_actual→current_line, disponible→available, pos_ens→asm_pos, pos_global→expr_ptr, primer_etiq/ultima_etiq→first_label/last_label, primer_indef/ultimo_indef→first_unres/last_unres, num_etiq→num_labels, num_indef→num_unres, num_arch→num_files, pos_linea→line_pos, nom→name_buf, linea→line_buf, separa/separa2→token/token2, etiq_indef→undef_label, btemp1/btemp2→buf1/buf2, tabla→instr_table, algo→changed, acumula→accum, preins/oriins→pre_ins/orig_ins, err→parse_err.
-
-Functions — inicia1–inicia5→init_basic_ops, init_ops, init_instr1, init_instr2, init_fpu; sale→quit, asigna→alloc, separa_componente→next_token, ensambla→assemble, etiqueta→define_label, busca_etiq→find_label, ins_op→emit_basic_op, ag_indef→add_unresolved, evalua_expresion→eval_expr, ins_sim→emit_simple, ins_ext→emit_extended, def_pal32→def_word32, def_espacio→def_space, def_equiv→def_equ, compara→match_str, obtiene_linea→read_line, enlaza→link_pass, paso→widen_pass, copia→copy_range, lee_linea→read_input, etemp1/etemp2→write_temp1/write_temp2, vtemp1/vtemp2→flush_temp1/flush_temp2, ltemp1→read_temp1, decimal→print_decimal.
-
-All string literals and error messages translated throughout.
 
 # Acknowledgements
 Óscar Toledo Gutierrez for writing his Transputer project, the original code, and

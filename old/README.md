@@ -51,6 +51,17 @@ to interface with the IServer. I'll be continuing this with 'cc1' (see above)
 
 Óscar enhanced this code significantly to make it build on 64-bit systems directly. (see 'cc1', in the parent directory.)
 
+# Small C Assembler Translation details
+
+Here's a summary of everything translated across the 1,473-line file:
+
+Macros — SI→YES, TAM_LIN→LINE_SIZE, TAM_BUF→BUF_SIZE, TAM_MEM→MEM_SIZE, TAM_ETIQ→LABEL_SIZE, TAM_INDEF→UNRES_SIZE, plus all the struct layout comments on those defines.
+
+Global variables — archivo→input_fp, temp1/temp2→temp1_fp/temp2_fp, fin_de_archivo→end_of_file, linea_actual→current_line, disponible→available, pos_ens→asm_pos, pos_global→expr_ptr, primer_etiq/ultima_etiq→first_label/last_label, primer_indef/ultimo_indef→first_unres/last_unres, num_etiq→num_labels, num_indef→num_unres, num_arch→num_files, pos_linea→line_pos, nom→name_buf, linea→line_buf, separa/separa2→token/token2, etiq_indef→undef_label, btemp1/btemp2→buf1/buf2, tabla→instr_table, algo→changed, acumula→accum, preins/oriins→pre_ins/orig_ins, err→parse_err.
+
+Functions — inicia1–inicia5→init_basic_ops, init_ops, init_instr1, init_instr2, init_fpu; sale→quit, asigna→alloc, separa_componente→next_token, ensambla→assemble, etiqueta→define_label, busca_etiq→find_label, ins_op→emit_basic_op, ag_indef→add_unresolved, evalua_expresion→eval_expr, ins_sim→emit_simple, ins_ext→emit_extended, def_pal32→def_word32, def_espacio→def_space, def_equiv→def_equ, compara→match_str, obtiene_linea→read_line, enlaza→link_pass, paso→widen_pass, copia→copy_range, lee_linea→read_input, etemp1/etemp2→write_temp1/write_temp2, vtemp1/vtemp2→flush_temp1/flush_temp2, ltemp1→read_temp1, decimal→print_decimal.
+
+All string literals and error messages translated throughout.
 
 # C Compiler Translation details
 Here's a summary of everything that was translated across the 3,018-line tc2.c file:

@@ -30,7 +30,7 @@ CFLAGS_OLD = -x c -g -std=gnu89 \
 
 BUILDDIR = build
 
-ALL = $(BUILDDIR)/tasm_modern \
+ALL = $(BUILDDIR)/tasm \
 		$(BUILDDIR)/cc1 \
 		$(BUILDDIR)/iserverstdio.asm \
 		$(BUILDDIR)/cc1.asm # segfault \
@@ -67,8 +67,8 @@ $(BUILDDIR)/cc1: cc1/CC.c cc1/CCvars.c cc1/CCinter.c cc1/CCanasin.c cc1/CCvarios
 # `make` will always run this and any other target that depends on it.
 FORCE:
 
-# Build the modern assembler (tasm_modern) for Linux. Could be built with cc1?
-$(BUILDDIR)/tasm_modern: tasm_modern.c | $(BUILDDIR)
+# Build the assembler natively. Could be built with cc1?
+$(BUILDDIR)/tasm: tasm.c | $(BUILDDIR)
 	echo Building $@
 	$(CC) -std=gnu99 -o $@ $<
 	echo ""
@@ -96,24 +96,24 @@ $(BUILDDIR)/iserverstdio.asm: $(BUILDDIR)/cc1
 	echo ""
 	echo ""
 
-# Using the modern assembler, assemble the compiler's .asm into a .bin (there are undefined symbols that don't fail the build yet)
+# Using the assembler, assemble the compiler's .asm into a .bin (there are undefined symbols that don't fail the build yet)
 $(BUILDDIR)/cc1.bin: $(BUILDDIR)/cc1.asm
 	echo Building $@
-	$(BUILDDIR)/tasm_modern $(BUILDDIR)/cc1.asm $(BUILDDIR)/cc1.bin $(BUILDDIR)/iserverstdio.asm
+	$(BUILDDIR)/tasm $(BUILDDIR)/cc1.asm $(BUILDDIR)/cc1.bin $(BUILDDIR)/iserverstdio.asm
 	echo ""
 	echo ""
 
 # Compile the assembler into .asm
-$(BUILDDIR)/tasm_modern.asm: $(BUILDDIR)/cc1
+$(BUILDDIR)/tasm.asm: $(BUILDDIR)/cc1
 	echo Building $@
-	$(BUILDDIR)/cc1 < tasm_modern.in
+	$(BUILDDIR)/cc1 < tasm.in
 	echo ""
 	echo ""
 
-# Using the modern assembler, assemble the assembler's .asm into a .bin.
-$(BUILDDIR)/tasm_modern.bin: $(BUILDDIR)/tasm_modern.asm
+# Using the assembler, assemble the assembler's .asm into a .bin.
+$(BUILDDIR)/tasm.bin: $(BUILDDIR)/tasm.asm
 	echo Building $@
-	$(BUILDDIR)/tasm_modern $(BUILDDIR)/tasm_modern.asm $(BUILDDIR)/tasm_modern.bin  $(BUILDDIR)/iserverstdio.asm
+	$(BUILDDIR)/tasm $(BUILDDIR)/tasm.asm $(BUILDDIR)/tasm.bin  $(BUILDDIR)/iserverstdio.asm
 	echo ""
 	echo ""
 
@@ -128,7 +128,7 @@ $(BUILDDIR)/iserver_putchar_example.asm: $(BUILDDIR)/cc1
 
 $(BUILDDIR)/iserver_putchar_example.bin: $(BUILDDIR)/iserver_putchar_example.asm
 	echo Building $@
-	$(BUILDDIR)/tasm_modern $(BUILDDIR)/iserver_putchar_example.asm $(BUILDDIR)/iserver_putchar_example.bin $(BUILDDIR)/iserverstdio.asm
+	$(BUILDDIR)/tasm $(BUILDDIR)/iserver_putchar_example.asm $(BUILDDIR)/iserver_putchar_example.bin $(BUILDDIR)/iserverstdio.asm
 	echo ""
 	echo ""
 

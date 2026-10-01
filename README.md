@@ -6,7 +6,7 @@ platforms - and in later phases of the project, the Transputer / IServer.
 These are included as part of the [Parachute Project](https://devzendo.github.io/parachute).
 
 Please note that much of this repository contains historical versions of these tools, and my attempts to integrate them
-with the rest of my project - Parachute contains native builds of the 'tasm_modern' assembler (source from here), and
+with the rest of my project - Parachute contains native builds of the 'tasm' assembler (source from here), and
 the 'cc1' compiler (this project pulls this in as a submodule from its origin, and patches it for use in Parachute).
 
 ## Project Status
@@ -22,7 +22,7 @@ build properly on 64-bit systems, and also provide user messages in English.
 See https://nanochess.org/transputer_c_compiler.html for more details of this. The
 compiler is now hosted in his repo at https://github.com/nanochess/transputer-cc . 
 
-The compilers ports/translations in this repo are no longer required (see below).
+The compilers ports/translations in the 'old' directory of this repo are no longer required (see `old/README.md`).
 
 This repo now pulls in Óscar's repo as a submodule under the 'cc1' directory, applies a few patches to it for use in the
 Parachute system, and builds it natively for all the platforms Parachute supports.
@@ -35,15 +35,14 @@ Later patches will:
 Later enhancements will add stdio/stdlib functions to permit the compiler to run on the emulator itself, using the IServer
 for I/O and command line handling - this will aid the project's bootstrappability.
 
-### 'tasm_modern' Assembler translated to English
-Written by Óscar for his emulation and OS project, between 1993-1996. 'tasm_modern' is a copy of his later assembler,
+### 'tasm' Assembler translated to English
+Written by Óscar for his emulation and OS project, between 1993-1996. 'tasm' is a copy of his later assembler,
 modified by Matt Gumbley..
 The modifications are:
 * Translation of messages, identifiers, comments etc. from Spanish to English. Matt does
   not speak Spanish, but the translations are being verified against the Ron Cain article.
   See AI Declaration, below.
-* Modifications to allow the tools to be first built on a 32-bit Linux system, running
-  Debian Bookworm.
+* Modifications to allow the tools to be built on native systems.
 * Enhancements to work with the Parachute IServer.
 * Bugfix: When errors are detected in the compiler, it exits with status 1.
 
@@ -95,9 +94,8 @@ For the first phase, on native platforms, build it with GNU make:
 
 `make clean; make`
 
-This will build the compilers and assemblers (build/tc2_linux, build/cc1_linux, and
-build/tasm_linux, build/tasm_modern_linux), then use this compiler to compile itself into the Transputer
-assembler file build/tc2.asm.
+This will build the compiler and assembler (build/cc1, build/tasm), then use this compiler to compile itself into the
+Transputer assembler file build/cc1.asm.
 
 This will then have to have the boot loader added, and assembled into a final binary by my macro assembler
 (transputer-macro-assembler) as the bootstrap code won't build with these assemblers yet - or, there isn't a bootstrap
@@ -161,7 +159,7 @@ see https://www.craicdesign.com/index.html and https://apps.apple.com/us/app/id6
 The very early commits to this repo contain translations of Óscar's original Spanish code
 into English. These were done by Matt using Claude. Matt has done his best to verify
 that these translations are correct. These are the 'old/tc2' and 'old/tasm' files, and the
-'tasm_modern' files here.
+'tasm' files here.
 
 Further miscellaneous translations done using Google Translate.
 

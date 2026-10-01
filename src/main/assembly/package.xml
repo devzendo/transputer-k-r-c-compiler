@@ -12,14 +12,10 @@
         <fileSet>
             <directory>${project.basedir}/build</directory>
             <includes>
-                <include>tc2.bin</include>
+                <include>cc1.bin</include>
                 <include>tasm.bin</include>
-                <!-- these are 32-bit... include them?
-                <include>tc2_linux</include>
-                <include>tasm_modern_linux</include>
-                -->
-                <!-- The 32-bit Intel Linux compiler, for now -->
-                <include>cc1_linux</include>
+                <include>cc1</include>
+                <include>tasm</include>
             </includes>
             <outputDirectory>bin</outputDirectory>
         </fileSet>

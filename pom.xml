@@ -8,8 +8,8 @@
     <artifactId>transputer-k-r-c-compiler</artifactId>
     <version>1.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>Transputer K&R C Compiler/Assembler</name>
-    <description>K&R C Compiler for the Parachute 32-bit Inmos T414/T800/T801/T805 Transputer emulator.
+    <name>Transputer Kernighan and Ritchie C Compiler/Assembler</name>
+    <description>C Compiler for the Parachute 32-bit Inmos T414/T800/T801/T805 Transputer emulator.
         Oscar Toledo Gutierrez.
     </description>
     <url>https://devzendo.github.io/parachute</url>

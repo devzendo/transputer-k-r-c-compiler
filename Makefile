@@ -35,9 +35,9 @@ endif
 BUILDDIR = build
 
 ALL = $(BUILDDIR)/tasm$(EXE) \
-		$(BUILDDIR)/cc1$(EXE) \
-		$(BUILDDIR)/iserverstdio.asm \
-		$(BUILDDIR)/iserver_putchar_example.asm
+		$(BUILDDIR)/cc1$(EXE)
+#		$(BUILDDIR)/iserverstdio.asm \
+#		$(BUILDDIR)/iserver_putchar_example.asm
 #		$(BUILDDIR)/cc1.asm \
 #		$(BUILDDIR)/tasm.asm \
 #		$(BUILDDIR)/cc1.bin \

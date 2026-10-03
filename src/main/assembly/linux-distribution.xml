@@ -1,7 +1,7 @@
 <assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
-    <id>transputer</id>
+    <id>${os.detected.release}-${os.detected.release.version}-${cmake.classifier}</id>
     <formats>
         <format>tar.gz</format>
     </formats>
@@ -10,14 +10,25 @@
 
     <fileSets>
         <fileSet>
-            <directory>${project.basedir}/build</directory>
+            <directory>${project.basedir}/${cmake.binary.dir}</directory>
             <includes>
-                <include>cc1.bin</include>
-                <include>tasm.bin</include>
                 <include>cc1</include>
+            </includes>
+            <outputDirectory>bin</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/${cmake.binary.dir}</directory>
+            <includes>
                 <include>tasm</include>
             </includes>
             <outputDirectory>bin</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}</directory>
+            <includes>
+                <include>iserver*.c</include>
+            </includes>
+            <outputDirectory>examples/iserver-c</outputDirectory>
         </fileSet>
     </fileSets>
     <files>
@@ -27,4 +38,5 @@
             <destName>README-transputer-k-r-c-compiler.md</destName>
         </file>
     </files>
+
 </assembly>

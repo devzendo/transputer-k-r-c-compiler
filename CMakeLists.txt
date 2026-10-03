@@ -16,20 +16,20 @@ execute_process(COMMAND git apply 0001-Set-Parachute-banner.patch
 add_executable(cc1 cc1/CC.c)
 add_executable(tasm tasm.c)
 
-if(NOT MSVC)
+if (NOT MSVC)
     set_target_properties(cc1 PROPERTIES
-        C_STANDARD 90
-        C_STANDARD_REQUIRED ON
-        C_EXTENSIONS OFF
+            C_STANDARD 90
+            C_STANDARD_REQUIRED ON
+            C_EXTENSIONS OFF
     )
     set_target_properties(tasm PROPERTIES
             C_STANDARD 90
             C_STANDARD_REQUIRED ON
             C_EXTENSIONS OFF
     )
-endif()
+endif ()
 
-if(CMAKE_C_COMPILER_ID STREQUAL "AppleClang")
+if (CMAKE_C_COMPILER_ID STREQUAL "AppleClang")
     message(STATUS "Using the AppleClang settings")
     # Clang 16+ promotes several K&R idioms to hard errors.
     # -Wno-implicit-int does NOT exist on Apple Clang; implicit-int is folded into
@@ -37,46 +37,46 @@ if(CMAKE_C_COMPILER_ID STREQUAL "AppleClang")
     # Apple SDK gates gets() behind _XOPEN_SOURCE on recent SDKs
 
     target_compile_options(tasm PRIVATE
-        -Wno-implicit-function-declaration  # calls before declaration
-        -Wno-return-type                    # fall-off-end functions
-        -Wno-int-conversion                 # char*/int* pointer aliasing
-        -Wno-strict-prototypes              # unprototyped parameter lists
-        -Wno-old-style-definition           # K&R parameter-declaration syntax
-        -Wno-deprecated-non-prototype       # same, newer Clang name
-        -Wno-parentheses                    # assignment-as-condition (K&R idiom)
-        -fno-strict-aliasing                # char[] walked as struct fields
-        -Wno-knr-promoted-parameter         # char/short args promoted to int
+            -Wno-implicit-function-declaration  # calls before declaration
+            -Wno-return-type                    # fall-off-end functions
+            -Wno-int-conversion                 # char*/int* pointer aliasing
+            -Wno-strict-prototypes              # unprototyped parameter lists
+            -Wno-old-style-definition           # K&R parameter-declaration syntax
+            -Wno-deprecated-non-prototype       # same, newer Clang name
+            -Wno-parentheses                    # assignment-as-condition (K&R idiom)
+            -fno-strict-aliasing                # char[] walked as struct fields
+            -Wno-knr-promoted-parameter         # char/short args promoted to int
     )
     target_compile_definitions(tasm PRIVATE _XOPEN_SOURCE=600)
 
     target_compile_options(cc1 PRIVATE
-        -Wno-implicit-function-declaration  # calls before declaration
-        -Wno-return-type                    # fall-off-end functions
-        -Wno-int-conversion                 # char*/int* pointer aliasing
-        -Wno-strict-prototypes              # unprototyped parameter lists
-        -Wno-old-style-definition           # K&R parameter-declaration syntax
-        -Wno-deprecated-non-prototype       # same, newer Clang name
-        -Wno-parentheses                    # assignment-as-condition (K&R idiom)
-        -fno-strict-aliasing                # char[] walked as struct fields
-        -Wno-knr-promoted-parameter         # char/short args promoted to int
-        -Wno-deprecated-declarations
-        -Wno-pointer-sign
-        -Wno-empty-body
+            -Wno-implicit-function-declaration  # calls before declaration
+            -Wno-return-type                    # fall-off-end functions
+            -Wno-int-conversion                 # char*/int* pointer aliasing
+            -Wno-strict-prototypes              # unprototyped parameter lists
+            -Wno-old-style-definition           # K&R parameter-declaration syntax
+            -Wno-deprecated-non-prototype       # same, newer Clang name
+            -Wno-parentheses                    # assignment-as-condition (K&R idiom)
+            -fno-strict-aliasing                # char[] walked as struct fields
+            -Wno-knr-promoted-parameter         # char/short args promoted to int
+            -Wno-deprecated-declarations
+            -Wno-pointer-sign
+            -Wno-empty-body
     )
     target_compile_definitions(cc1 PRIVATE _XOPEN_SOURCE=600)
 
-elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     message(STATUS "Using the GNU settings")
     target_compile_options(tasm PRIVATE
-        -Wno-implicit-int
-        -Wno-implicit-function-declaration
-        -Wno-return-type
-        -Wno-int-conversion
-        -Wno-strict-prototypes
-        -Wno-old-style-definition
-        -Wno-old-style-declaration
-        -Wno-parentheses
-        -fno-strict-aliasing
+            -Wno-implicit-int
+            -Wno-implicit-function-declaration
+            -Wno-return-type
+            -Wno-int-conversion
+            -Wno-strict-prototypes
+            -Wno-old-style-definition
+            -Wno-old-style-declaration
+            -Wno-parentheses
+            -fno-strict-aliasing
     )
 
     target_compile_options(cc1 PRIVATE
@@ -91,7 +91,7 @@ elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
             -fno-strict-aliasing
     )
 
-elseif(MSVC)
+elseif (MSVC)
     message(STATUS "Using the MSVC settings")
 
-endif()
+endif ()

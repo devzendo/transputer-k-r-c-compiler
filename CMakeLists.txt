@@ -93,5 +93,28 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
 
 elseif (MSVC)
     message(STATUS "Using the MSVC settings")
+    target_compile_options(tasm PRIVATE
+            /wd4013   # implicit function declaration
+            /wd4131   # K&R old-style declarator
+            /wd4028   # parameter differs from declaration
+            /wd4047   # pointer indirection level mismatch
+            /wd4024   # type mismatch for formal parameter
+            /wd4033   # function must return a value
+            /wd4505   # unreferenced local function removed
+            /wd4706   # assignment within conditional expression
+            /wd4996   # any remaining CRT deprecation warnings
+    )
+
+    target_compile_options(cc1 PRIVATE
+            /wd4013   # implicit function declaration
+            /wd4131   # K&R old-style declarator
+            /wd4028   # parameter differs from declaration
+            /wd4047   # pointer indirection level mismatch
+            /wd4024   # type mismatch for formal parameter
+            /wd4033   # function must return a value
+            /wd4505   # unreferenced local function removed
+            /wd4706   # assignment within conditional expression
+            /wd4996   # any remaining CRT deprecation warnings
+    )
 
 endif ()

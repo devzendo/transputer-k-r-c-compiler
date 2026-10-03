@@ -50,23 +50,46 @@ if(CMAKE_C_COMPILER_ID STREQUAL "AppleClang")
     target_compile_definitions(tasm PRIVATE _XOPEN_SOURCE=600)
 
     target_compile_options(cc1 PRIVATE
-            -Wno-implicit-function-declaration  # calls before declaration
-            -Wno-return-type                    # fall-off-end functions
-            -Wno-int-conversion                 # char*/int* pointer aliasing
-            -Wno-strict-prototypes              # unprototyped parameter lists
-            -Wno-old-style-definition           # K&R parameter-declaration syntax
-            -Wno-deprecated-non-prototype       # same, newer Clang name
-            -Wno-parentheses                    # assignment-as-condition (K&R idiom)
-            -fno-strict-aliasing                # char[] walked as struct fields
-            -Wno-knr-promoted-parameter         # char/short args promoted to int
-            -Wno-deprecated-declarations
-            -Wno-pointer-sign
-            -Wno-empty-body
+        -Wno-implicit-function-declaration  # calls before declaration
+        -Wno-return-type                    # fall-off-end functions
+        -Wno-int-conversion                 # char*/int* pointer aliasing
+        -Wno-strict-prototypes              # unprototyped parameter lists
+        -Wno-old-style-definition           # K&R parameter-declaration syntax
+        -Wno-deprecated-non-prototype       # same, newer Clang name
+        -Wno-parentheses                    # assignment-as-condition (K&R idiom)
+        -fno-strict-aliasing                # char[] walked as struct fields
+        -Wno-knr-promoted-parameter         # char/short args promoted to int
+        -Wno-deprecated-declarations
+        -Wno-pointer-sign
+        -Wno-empty-body
     )
     target_compile_definitions(cc1 PRIVATE _XOPEN_SOURCE=600)
 
 elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
     message(STATUS "Using the GNU settings")
+    target_compile_options(tasm PRIVATE
+        -Wno-implicit-int
+        -Wno-implicit-function-declaration
+        -Wno-return-type
+        -Wno-int-conversion
+        -Wno-strict-prototypes
+        -Wno-old-style-definition
+        -Wno-old-style-declaration
+        -Wno-parentheses
+        -fno-strict-aliasing
+    )
+
+    target_compile_options(cc1 PRIVATE
+            -Wno-implicit-int
+            -Wno-implicit-function-declaration
+            -Wno-return-type
+            -Wno-int-conversion
+            -Wno-strict-prototypes
+            -Wno-old-style-definition
+            -Wno-old-style-declaration
+            -Wno-parentheses
+            -fno-strict-aliasing
+    )
 
 elseif(MSVC)
     message(STATUS "Using the MSVC settings")

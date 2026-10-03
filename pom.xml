@@ -157,6 +157,9 @@
                 </executions>
             </plugin>
 
+            <!--
+            Is signing strictly needed here, as the output is merged into a larger project that's not going to
+            Maven Central?
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
@@ -174,6 +177,7 @@
                     </execution>
                 </executions>
             </plugin>
+            -->
 
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>

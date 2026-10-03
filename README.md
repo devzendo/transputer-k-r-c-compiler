@@ -22,26 +22,26 @@ Started late April 2026.
 ### 'cc1' K&R C Native Compiler with English messages
 Shortly after writing https://nanochess.org/bootstrapping_c_os_transputer.html, Óscar started modifying his compiler to
 build properly on 64-bit systems, and also provide user messages in English.
-See https://nanochess.org/transputer_c_compiler.html for more details of this. The
-compiler is now hosted in his repo at https://github.com/nanochess/transputer-cc . 
+See https://nanochess.org/transputer_c_compiler.html for more details of this.
 
-The compilers ports/translations in the 'old' directory of this repo are no longer required (see `old/README.md`).
+The compiler is now hosted in his repo at https://github.com/nanochess/transputer-cc .
 
-This repo now pulls in Óscar's repo as a submodule under the 'cc1' directory, applies a few patches to it for use in the
-Parachute system, and builds it natively for all the platforms Parachute supports.
+This project now pulls in Óscar's repo as a submodule under the 'cc1' directory, applies a few patches to it for use in
+the Parachute system, and builds it natively for all the platforms Parachute supports.
 The patches perform the following:
 * Updates the banner to show that this is a Parachute variant of the compiler.
 
 Later patches will:
-* Add command-line handling to set the input/output file and options. The original compiler is interactive.
+* Add command-line handling to set the input/output file and options. (The original compiler is interactive.)
 
-Later enhancements will add stdio/stdlib functions to permit the compiler to run on the emulator itself, using the IServer
-for I/O and command line handling - this will aid the project's bootstrappability.
+Later enhancements will add stdio/stdlib functions to permit the compiler to run on the emulator itself, using the
+IServer for I/O and command line handling - this will aid the project's bootstrappability.
+
+(The compilers ports/translations in the 'old' directory of this repo are no longer required - see `old/README.md`).
 
 ### 'tasm' Assembler translated to English
 Written by Óscar for his emulation and OS project, between 1993-1996. 'tasm' is a copy of his later assembler,
-modified by Matt Gumbley..
-The modifications are:
+modified by Matt; the modifications are:
 * Translation of messages, identifiers, comments etc. from Spanish to English. Matt does
   not speak Spanish, but the translations are being verified against the Ron Cain article.
   See AI Declaration, below.
@@ -53,10 +53,12 @@ The modifications are:
 # Overview
 I'd like to bootstrap my development efforts for Transputer code, and with my existing
 assembler (transputer-macro-assembler) being written in Scala, it's not going to run
-on the Transputer itself any time soon. It was written with the goal of assembling
+on the Transputer itself any time soon. That assembler was written with the goal of assembling
 eForth, writing in a modern language with pattern matching/parser combinators. At the
-time, I never considered bootstrapping. I'm considering rewriting it in C. I also need
-a C compiler that I can bootstrap, and my initial effort at this (retro-c-compiler) was
+time, I never considered bootstrapping. I'm considering rewriting it in C.
+
+Now that I am considering the bootstrapping of this project, I also need development tools (a C compiler
+and assembler) that I can bootstrap, and my initial effort at this (retro-c-compiler) was
 also not started with the vision of bootstrapping in mind, so I started writing it in
 Rust, as this was/is my current favourite/day job language. Again, I'm not going to run
 that on the Transputer itself any time soon.
@@ -87,26 +89,37 @@ SmartGit use tools/Format Patch to create the patch file, in the root of this re
 necessary. Edit the patch to add in the cc1/ prefix to all directories/files. You can now Undo the Last Commit in the
 cc1 submodule.
 
+Ensure the patch is applied by adding the relevant lines into the 'Patching' section in CMakeLists.txt.
+
 ## Building
+You will need CMake, git, and a suitable C compiler/assembler toolchain.
+
+Maven is used by my build cluster to perform cross-platform builds and packaging for all the platforms Parachute is
+ported to; you don't need it.
+
 Ensure you have pulled the submodules with:
 `git submodule update --init --recursive`
 
-For the first phase, on native platforms, build it with GNU make:
-`make clean; make`
+Then generate the build tree (for example on a POSIX system):
+`mkdir -p cmake-build-release`
+`(cd cmake-build-release && cmake -G 'Unix Makefiles')`
 
-This will patch & build the compiler and assembler (build/cc1, build/tasm), then use this compiler to compile itself
-into the Transputer assembler file build/cc1.asm.
+Now build:
+`cmake --build cmake-build-release --target all`
 
-... and that's as far as we go for now. Compiler and assembler run only on native platforms.
+This will patch & build the compiler and assembler (cmake-build-release/cc1, cmake-build-release/tasm).
 
-This will then have to have the boot loader added, and assembled into a final binary by my macro assembler
-(transputer-macro-assembler) as the bootstrap code won't build with these assemblers yet - or, there isn't a bootstrap
-that's compatible with the syntax understood by these assemblers.
+... and that's as far as we go for now. Compiler and assembler run only on native platforms for now.
 
-To build it on the Transputer... (later)
+Eventually, we'll use the compiler and assembler to build themselves along with iserverstdio.c, so that they can
+run on the emulator/IServer. iserverstdio.c is unfinished (currently written for the earlier Small-C compiler).
 
-# Packaging
-Later!
+# Examples
+The examples here will then have to have the boot loader added, and assembled into a final binary by my macro assembler
+(transputer-macro-assembler) as the bootstrap code won't build with tasm yet - or, there isn't a bootstrap version
+that's compatible with the syntax understood by tasm. This will require a pre-assembly stage that adapts
+the bootloader and compiled C code to have an appropriate workspace set up after the bootloader, so that execution can
+be transferred to the compiled C code.
 
 # Documentation
 When there is some, it'll be in the 'docs' directory, when this exists!
@@ -150,7 +163,7 @@ see https://www.craicdesign.com/index.html and https://apps.apple.com/us/app/id6
 The very early commits to this repo contain translations of Óscar's original Spanish code
 into English. These were done by Matt using Claude. Matt has done his best to verify
 that these translations are correct. These are the 'old/tc2' and 'old/tasm' files, and the
-'tasm' files here.
+'tasm.c' files here.
 
 Further miscellaneous translations done using Google Translate.
 

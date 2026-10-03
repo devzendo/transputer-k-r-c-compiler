@@ -44,23 +44,47 @@
         </repository>
     </distributionManagement>
 
+    <properties>
+        <cmake.binary.dir>cmake-build-debug</cmake.binary.dir>
+        <cmake.build.type>debug</cmake.build.type>
+        <download.cmake>false</download.cmake> <!-- old setting -->
+        <cmake.download>false</cmake.download> <!-- new setting -->
+    </properties>
+
     <build>
+        <extensions>
+            <extension>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.6.1</version>
+            </extension>
+        </extensions>
+
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <!-- Used to use ${cmake.binary.dir} but that doesn't clear out the 'debug' dir when
+                         switching to 'release' and vice versa -->
+                    <filesets>
+                        <fileset>
+                            <directory>cmake-build-debug</directory>
+                            <followSymlinks>false</followSymlinks>
+                        </fileset>
+                        <fileset>
+                            <directory>cmake-build-release</directory>
+                            <followSymlinks>false</followSymlinks>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.6.3</version>
                 <executions>
-                    <execution>
-                        <id>make</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>make</executable>
-                        </configuration>
-                    </execution>
                     <execution>
                         <id>clean</id>
                         <phase>clean</phase>
@@ -68,14 +92,52 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <executable>make</executable>
+                            <workingDirectory>cc1</workingDirectory>
+                            <executable>git</executable>
                             <arguments>
-                                <argument>clean</argument>
+                                <argument>checkout</argument>
+                                <argument>--</argument>
+                                <argument>*</argument>
                             </arguments>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>io.github.cmake-maven-plugin</groupId>
+                <artifactId>cmake-maven-plugin</artifactId>
+                <version>4.2.3-b1</version>
+                <executions>
+                    <!-- Generate the CMake cache/binary build dir -->
+                    <execution>
+                        <id>cmake-generate</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <sourcePath>${project.basedir}</sourcePath>
+                            <projectDirectory>${project.basedir}/${cmake.binary.dir}</projectDirectory>
+                            <generator>${cmake.generator}</generator>
+                            <environmentVariables>
+                                <CMAKE_BUILD_TYPE>${cmake.build.type}</CMAKE_BUILD_TYPE>
+                            </environmentVariables>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>cmake-compile</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <target>all</target>
+                            <projectDirectory>${project.basedir}/${cmake.binary.dir}</projectDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>3.1.1</version>
@@ -94,6 +156,7 @@
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
@@ -111,6 +174,7 @@
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
@@ -124,4 +188,119 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>linux-amd64</id>
+            <activation>
+                <os>
+                    <name>linux</name>
+                    <arch>amd64</arch>
+                </os>
+            </activation>
+            <properties>
+                <!-- Use the apt-installed cmake: no need to set its path -->
+                <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
+                <cmake.generator>Unix Makefiles</cmake.generator>
+                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64, mac-aarch64]. -->
+                <cmake.classifier>linux-x86_64</cmake.classifier>
+                <install.dir>/opt/parachute</install.dir>
+                <binary.suffix></binary.suffix>
+                <assembly.name>linux-distribution</assembly.name>
+            </properties>
+            <build>
+            </build>
+        </profile>
+
+        <profile>
+            <id>linux-aarch64</id>
+            <activation>
+                <os>
+                    <name>linux</name>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <!-- Use the apt-installed cmake: no need to set its path -->
+                <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
+                <cmake.generator>Unix Makefiles</cmake.generator>
+                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64, mac-aarch64]. -->
+                <cmake.classifier>linux-aarch_64</cmake.classifier>
+                <install.dir>/opt/parachute</install.dir>
+                <binary.suffix></binary.suffix>
+                <assembly.name>linux-distribution</assembly.name>
+            </properties>
+            <build>
+            </build>
+        </profile>
+
+        <profile>
+            <id>macosx-x86_64</id>
+            <activation>
+                <os>
+                    <name>mac os x</name>
+                    <arch>x86_64</arch>
+                </os>
+            </activation>
+            <properties>
+                <!-- Use the macports-installed cmake or a manual install on the path: no need to set its path -->
+                <!-- These are two of my properties I pass in to the CMake plugin, they're not known by the plugin innately -->
+                <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
+                <cmake.generator>Unix Makefiles</cmake.generator>
+                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64, mac-aarch64]. -->
+                <cmake.classifier>mac-x86_64</cmake.classifier>
+                <install.dir>/opt/parachute</install.dir>
+                <binary.suffix></binary.suffix>
+                <assembly.name>macosx-distribution</assembly.name>
+            </properties>
+            <build>
+            </build>
+        </profile>
+
+        <profile>
+            <id>macosx-aarch64</id>
+            <activation>
+                <os>
+                    <name>mac os x</name>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <!-- Use the macports-installed cmake or a manual install on the path: no need to set its path -->
+                <!-- These are two of my properties I pass in to the CMake plugin, they're not known by the plugin innately -->
+                <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
+                <cmake.generator>Unix Makefiles</cmake.generator>
+                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64, mac-aarch64]. -->
+                <cmake.classifier>mac-aarch64</cmake.classifier>
+                <install.dir>/opt/parachute</install.dir>
+                <binary.suffix></binary.suffix>
+                <assembly.name>macosx-distribution</assembly.name>
+            </properties>
+            <build>
+            </build>
+        </profile>
+
+        <profile>
+            <id>windows</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <!-- The CMake maven plugin understands cmake.root.dir -->
+                <cmake.root.dir>C:/Program Files/CMake</cmake.root.dir>
+                <!-- These are two of my properties I pass in to the CMake plugin, they're not known by the plugin innately -->
+                <!-- One of the generators defined at https://cmake.org/cmake/help/v3.7/manual/cmake-generators.7.html -->
+                <cmake.generator>NMake Makefiles</cmake.generator>
+                <!-- The classifier of the current platform. One of [windows-x86_32, windows-x86_64, linux-x86_32, linux-x86_64, linux-arm_32, mac-x86_64]. -->
+                <cmake.classifier>windows-x86_64</cmake.classifier>
+                <install.dir>C:/parachute</install.dir>
+                <binary.suffix>.exe</binary.suffix>
+                <assembly.name>windows-distribution</assembly.name>
+            </properties>
+            <build>
+            </build>
+        </profile>
+    </profiles>
 </project>
